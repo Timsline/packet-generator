@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<packets_summary> 
+	<item> 
+		<index>1</index> 
+		<frame_type>Ethernet</frame_type> 
+		<local_mac_address>00-21-85-11-29-1b</local_mac_address> 
+		<remote_mac_address></remote_mac_address> 
+		<protocol>IP</protocol> 
+		<version>4</version> 
+		<local_address>147.175.106.141</local_address> 
+		<remote_address>255.255.255.255</remote_address> 
+		<protocol_type>UDP</protocol_type> 
+		<protocol>UDP</protocol> 
+		<local_port>17500</local_port> 
+		<remote_port>17500</remote_port> 
+		<service_name></service_name> 
+		<packets>8</packets> 
+	</item> 
+	<item> 
+		<index>2</index> 
+		<frame_type>Ethernet</frame_type> 
+		<local_mac_address>00-1d-60-45-59-07</local_mac_address> 
+		<remote_mac_address>00-03-ba-9a-15-63</remote_mac_address> 
+		<protocol>IP</protocol> 
+		<version>4</version> 
+		<local_address>147.175.106.158</local_address> 
+		<remote_address>147.175.111.15</remote_address> 
+		<protocol_type>UDP</protocol_type> 
+		<protocol>UDP</protocol> 
+		<local_port>55526</local_port> 
+		<remote_port>53</remote_port> 
+		<packets>2</packets> 
+	</item> 
+	<item> 
+		<index>3</index> 
+		<frame_type>Ethernet</frame_type> 
+		<local_mac_address>00-1d-60-45-59-07</local_mac_address> 
+		<remote_mac_address>00-03-ba-9a-15-63</remote_mac_address> 
+		<protocol>IP</protocol> 
+		<version>4</version> 
+		<local_address>147.175.106.158</local_address> 
+		<remote_address>173.194.39.100</remote_address> 
+		<protocol_type>TCP</protocol_type> 
+		<protocol>TCP</protocol> 
+		<local_port>3991</local_port> 
+		<remote_port>80</remote_port> 
+		<packets>7</packets> 
+	</item> 
+	<item> 
+		<index>4</index>
+		<frame_type>Ethernet</frame_type> 
+		<local_mac_address>00-1d-60-45-59-07</local_mac_address> 
+		<remote_mac_address>00-03-ba-9a-15-63</remote_mac_address> 
+		<protocol>IP</protocol> 
+		<version>4</version> 
+		<local_address>147.175.106.158</local_address> 
+		<remote_address>93.184.69.3</remote_address> 
+		<protocol_type>TCP</protocol_type> 
+		<protocol>TCP</protocol> 
+		<local_port>4000</local_port> 
+		<remote_port>21</remote_port> 
+		<packets>4</packets> 
+	</item> 
+	<item>
+		<index>5</index> 
+		<frame_type>802.3</frame_type> 
+		<local_mac_address>00-1d-60-45-59-07</local_mac_address> 
+		<remote_mac_address>00-03-ba-9a-15-63</remote_mac_address> 
+		<protocol>IPX</protocol> 
+		<local_net_address>30 09 80 00</local_net_address> 
+		<local_socket_address>04 53</local_socket_address> 
+		<remote_net_address>30 09 80 00</remote_net_address> 
+		<remote_socket_address>04 53</remote_socket_address> 
+		<protocol_type>PEP</protocol_type> 
+		<packets>4</packets> 
+	</item> 
+</packets_summary>
