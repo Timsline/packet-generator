@@ -25,11 +25,12 @@
 *
 */
 
-//#include <stdio.h>    // to get "printf" function
-//#include <stdlib.h>   // to get "free" function
+#include <stdio.h>    // to get "printf" function
+#include <stdlib.h>   // to get "free" function
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <string>
 #include "xmlparser.h"
 
 #include <pcap.h>
@@ -43,8 +44,6 @@ class IPPacket {
 class IPXPacket {
 
 };
-
-
 
 int main(int argc, char **argv)
 {
@@ -86,27 +85,28 @@ int main(int argc, char **argv)
 
     pcap_t *cap_dead;
     pcap_dumper_t *cap_dumper;
+   
 
     //struct pcap_pkthdr header;
     //u_char *pkt_data;
     char packet[58];
     
-    // set mac destination address to 01 : 01 : 01 : 01 : 01 : 01
+    // mac destination address to 00-00-00-00-00-00
     packet[0] = 0x00;
-    packet[1] = 0x23;
-    packet[2] = 0x5a;
-    packet[3] = 0x99;
-    packet[4] = 0x4f;
-    packet[5] = 0xe2;
+    packet[1] = 0x00;
+    packet[2] = 0x00;
+    packet[3] = 0x00;
+    packet[4] = 0x00;
+    packet[5] = 0x00;
     
-    // set mac source address to 02 : 02 : 02 : 02 : 02 : 02
-    packet[6]  = 0x00;
-    packet[7]  = 0x13;
-    packet[8]  = 0x8f;
-    packet[9]  = 0x83;
-    packet[10] = 0xa9;
-    packet[11] = 0xb3;
-    
+    // set mac source address to 00-21-85-11-29-1b
+    packet[6]  = 0;
+    packet[7] = stoi("00", NULL, 16);
+    packet[8]  = stoi("85", NULL, 16);
+    packet[9]  = stoi("11", NULL, 16);
+    packet[10] = stoi("29", NULL, 16);
+    packet[11] = stoi("1b", NULL, 16);    
+            
     // set the rest of the packet
 
     packet[12]  = 0x08;
@@ -188,11 +188,11 @@ int main(int argc, char **argv)
 
     //creation of header
     pcap_pkthdr *header = (pcap_pkthdr*)malloc(sizeof(pcap_pkthdr));
-    header->caplen = 62;
-    header->len = 62;
+    header->caplen = 60;
+    header->len = 60;
     header->ts = *ts;
 
-    
+
     /*
      int main()
 {    

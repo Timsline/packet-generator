@@ -38,6 +38,11 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
+        <ccTool>
+          <architecture>2</architecture>
+          <standard>8</standard>
+          <commandlineTool>g++</commandlineTool>
+        </ccTool>
         <linkerTool>
           <linkerLibItems>
             <linkerLibLibItem>pcap</linkerLibLibItem>
