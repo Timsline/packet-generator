@@ -1,28 +1,10 @@
 /*
-*   <item>
-*       <index>1</index>
-*		<frame_type>Ethernet</frame_type>
-*               <local_mac_address>00-21-85-11-29-1b</local_mac_address>
-*		<remote_mac_address></remote_mac_address>
-*		<protocol>IP</protocol>
-*		<version>4</version>
-*		<local_address>147.175.106.141</local_address>
-*		<remote_address>255.255.255.255</remote_address>
-*		<protocol_type>UDP</protocol_type>
-*		<protocol>UDP</protocol>
-*		<local_port>17500</local_port>
-*		<remote_port>17500</remote_port>
-*		<service_name></service_name>
-*		<packets>8</packets>
-*	</item>
-*
-*/
-
-/*
 *   Author: Erich Stark
 *
-*
-*
+*   2014
+* 
+* 
+*   Licence: GPLv3
 */
 
 #include <stdio.h>    // to get "printf" function
@@ -45,6 +27,243 @@ class IPXPacket {
 
 };
 
+
+int str_to_int(string text) {
+    return stoi(text, NULL, 16);
+}
+
+int str_to_int(string text, int base) {
+    return stoi(text, NULL, base);
+}
+
+char* create_udp_packet(int size_of_packet) {
+    char* packet;
+    packet = (char*)malloc((size_of_packet)*1);
+    
+    // mac destination address to 00-00-00-00-00-00
+    packet[0] = 0;
+    packet[1] = 0;
+    packet[2] = 0;
+    packet[3] = 0;
+    packet[4] = 0;
+    packet[5] = 0;
+    
+    // set mac source address to 00-21-85-11-29-1b
+    packet[6] = str_to_int("00");
+    packet[7] = str_to_int("21");
+    packet[8] = str_to_int("85");
+    packet[9] = str_to_int("11");
+    packet[10] = str_to_int("29");
+    packet[11] = str_to_int("1b");    
+            
+    // set IP protocol 0x0800
+
+    packet[12]  = 0x08;
+    packet[13]  = 0x00;
+    
+    // IPv4 = 0x45
+    packet[14]  = 0x45;
+    
+    // ??
+    packet[15]  = 0x00;
+    
+    // length IP
+    packet[16]  = 0x00;
+    packet[17]  = 0x00;
+    
+    // identification
+    packet[18]  = 0x00;
+    packet[19]  = 0x00;
+    
+    // flags
+    packet[20]  = 0x00;
+    
+    
+    packet[21]  = 0x00;
+    
+    // Time To Live - TTL  128?
+    packet[22]  = 0x40;
+    
+    // protocol UDP
+    packet[23]  = str_to_int("17",10);
+    
+    // UDP header checksum
+    packet[24]  = 0x00;
+    packet[25]  = 0x00;
+    
+    // IP source address 147.175.106.141
+    packet[26]  = str_to_int("147",10);
+    packet[27]  = str_to_int("175",10);
+    packet[28]  = str_to_int("106",10);
+    packet[29]  = str_to_int("141",10);
+    
+    // IP destination address
+    packet[30]  = str_to_int("255",10);
+    packet[31]  = str_to_int("255",10);
+    packet[32]  = str_to_int("255",10);
+    packet[33]  = str_to_int("255",10);
+    
+    // UDP information
+    // udp source port
+    packet[34]  = str_to_int("44");
+    packet[35]  = str_to_int("5c");
+    
+    // udp destination port
+    packet[36]  = str_to_int("44");
+    packet[37]  = str_to_int("5c");
+    
+    // udp length
+    packet[38]  = 0x00;
+    packet[39]  = 0x14;
+    
+    // check sum
+    packet[40]  = 0x00;
+    packet[41]  = 0x00;
+    
+    
+    // data 50:69:76:61:72:6e:69:6b:20:6a:65:20:68:6f:6d:6f:73:20:3a:44
+    packet[42]  = 0x50;
+    packet[43]  = 0x69;
+    packet[44]  = 0x76;
+    packet[45]  = 0x61;
+    
+    packet[46]  = 0x72;
+    packet[47]  = 0x6e;
+    packet[48]  = 0x69;
+    packet[49]  = 0x6b;
+    packet[50]  = 0x20;
+    packet[51]  = 0x6a;
+    packet[52]  = 0x65;
+    packet[53]  = 0x20;
+    
+    packet[54]  = 0x68;
+    packet[55]  = 0x6f;
+    packet[56]  = 0x6d;
+    packet[57]  = 0x6f;
+    packet[58]  = 0x73;
+    packet[59]  = 0x20;
+    packet[60]  = 0x3a;
+    packet[61]  = 0x44;
+    
+    return packet;
+}
+
+char* create_tcp_packet(int size_of_packet) {
+    char* packet;
+    packet = (char*)malloc((size_of_packet)*1);
+    
+    // mac destination address to 00-00-00-00-00-00
+    packet[0] = 0;
+    packet[1] = 0;
+    packet[2] = 0;
+    packet[3] = 0;
+    packet[4] = 0;
+    packet[5] = 0;
+    
+    // set mac source address to 00-21-85-11-29-1b
+    packet[6] = str_to_int("00");
+    packet[7] = str_to_int("21");
+    packet[8] = str_to_int("85");
+    packet[9] = str_to_int("11");
+    packet[10] = str_to_int("29");
+    packet[11] = str_to_int("1b");    
+            
+    // set IP protocol 0x0800
+
+    packet[12]  = 0x08;
+    packet[13]  = 0x00;
+    
+    // IPv4 = 0x45
+    packet[14]  = 0x45;
+    
+    // ??
+    packet[15]  = 0x00;
+    
+    // length IP
+    packet[16]  = 0x00;
+    packet[17]  = 0x00;
+    
+    // identification
+    packet[18]  = 0x00;
+    packet[19]  = 0x00;
+    
+    // flags
+    packet[20]  = 0x00;
+    
+    
+    packet[21]  = 0x00;
+    
+    // Time To Live - TTL  128?
+    packet[22]  = 0x40;
+    
+    // protocol UDP
+    packet[23]  = str_to_int("17",10);
+    
+    // UDP header checksum
+    packet[24]  = 0x00;
+    packet[25]  = 0x00;
+    
+    // IP source address 147.175.106.141
+    packet[26]  = str_to_int("147",10);
+    packet[27]  = str_to_int("175",10);
+    packet[28]  = str_to_int("106",10);
+    packet[29]  = str_to_int("141",10);
+    
+    // IP destination address
+    packet[30]  = str_to_int("255",10);
+    packet[31]  = str_to_int("255",10);
+    packet[32]  = str_to_int("255",10);
+    packet[33]  = str_to_int("255",10);
+    
+    // UDP information
+    // udp source port
+    packet[34]  = str_to_int("44");
+    packet[35]  = str_to_int("5c");
+    
+    // udp destination port
+    packet[36]  = str_to_int("44");
+    packet[37]  = str_to_int("5c");
+    
+    // udp length
+    packet[38]  = 0x00;
+    packet[39]  = 0x14;
+    
+    // check sum
+    packet[40]  = 0x00;
+    packet[41]  = 0x00;
+    
+    
+    // data 50:69:76:61:72:6e:69:6b:20:6a:65:20:68:6f:6d:6f:73:20:3a:44
+    packet[42]  = 0x50;
+    packet[43]  = 0x69;
+    packet[44]  = 0x76;
+    packet[45]  = 0x61;
+    
+    packet[46]  = 0x72;
+    packet[47]  = 0x6e;
+    packet[48]  = 0x69;
+    packet[49]  = 0x6b;
+    packet[50]  = 0x20;
+    packet[51]  = 0x6a;
+    packet[52]  = 0x65;
+    packet[53]  = 0x20;
+    
+    packet[54]  = 0x68;
+    packet[55]  = 0x6f;
+    packet[56]  = 0x6d;
+    packet[57]  = 0x6f;
+    packet[58]  = 0x73;
+    packet[59]  = 0x20;
+    packet[60]  = 0x3a;
+    packet[61]  = 0x44;
+    
+    return packet;
+}
+
+void create_ipx_packet() {
+    char packet[58];
+}
+
 int main(int argc, char **argv)
 {
     int index;
@@ -63,7 +282,7 @@ int main(int argc, char **argv)
     string packets;
 
     //ofstream pcap_file_new;
-    char file_name[] = "ahoj.pcap";
+    char file_name[] = "packet.pcap";
 
 
 
@@ -87,95 +306,27 @@ int main(int argc, char **argv)
     pcap_dumper_t *cap_dumper;
    
 
-    //struct pcap_pkthdr header;
-    //u_char *pkt_data;
-    char packet[58];
-    
-    // mac destination address to 00-00-00-00-00-00
-    packet[0] = 0x00;
-    packet[1] = 0x00;
-    packet[2] = 0x00;
-    packet[3] = 0x00;
-    packet[4] = 0x00;
-    packet[5] = 0x00;
-    
-    // set mac source address to 00-21-85-11-29-1b
-    packet[6]  = 0;
-    packet[7] = stoi("00", NULL, 16);
-    packet[8]  = stoi("85", NULL, 16);
-    packet[9]  = stoi("11", NULL, 16);
-    packet[10] = stoi("29", NULL, 16);
-    packet[11] = stoi("1b", NULL, 16);    
-            
-    // set the rest of the packet
-
-    packet[12]  = 0x08;
-    packet[13]  = 0x00;
-    
-    packet[14]  = 0x45;
-    packet[15]  = 0x00;
-    packet[16]  = 0x00;
-    packet[17]  = 0x2c;
-    
-    packet[18]  = 0x00;
-    packet[19]  = 0xfb;
-    
-    packet[20]  = 0x40;
-    packet[21]  = 0x00;
-    packet[22]  = 0x40;
-    packet[23]  = 0x06;
-    
-    packet[24]  = 0xb6;
-    packet[25]  = 0x7d;
-    
-    packet[26]  = 0xc0;
-    packet[27]  = 0xa8;
-    packet[28]  = 0x01;
-    packet[29]  = 0x01;
-    packet[30]  = 0xc0;
-    packet[31]  = 0xa8;
-    packet[32]  = 0x01;
-    packet[33]  = 0x02;
-    
-    packet[34]  = 0x04;
-    packet[35]  = 0x15;
-    packet[36]  = 0x00;
-    packet[37]  = 0xa6;
-    
-    packet[38]  = 0x4d;
-    packet[39]  = 0x62;
-    packet[40]  = 0xfe;
-    packet[41]  = 0x09;
-    
-    packet[42]  = 0x17;
-    packet[43]  = 0x46;
-    packet[44]  = 0x60;
-    packet[45]  = 0x5c;
-    
-    packet[46]  = 0x50;
-    packet[47]  = 0x18;
-    packet[48]  = 0xff;
-    packet[49]  = 0xff;
-    packet[50]  = 0x7d;
-    packet[51]  = 0x15;
-    packet[52]  = 0x00;
-    packet[53]  = 0x00;
-    
-    packet[54]  = 0x74;
-    packet[55]  = 0x65;
-    packet[56]  = 0x73;
-    packet[57]  = 0x74;
-
-    // fill header 
     /*
-    header->caplen = 454;
-    header->len = 65535;
-    header->ts->tv_sec = ;
-    header->ts->tv_usec = ;
-    */
+*   <item>
+*       <index>1</index>
+*		<frame_type>Ethernet</frame_type>
+*               <local_mac_address>00-21-85-11-29-1b</local_mac_address>
+*		<remote_mac_address></remote_mac_address>
+*		<protocol>IP</protocol>
+*		<version>4</version>
+*		<local_address>147.175.106.141</local_address>
+*		<remote_address>255.255.255.255</remote_address>
+*		<protocol_type>UDP</protocol_type>
+*		<protocol>UDP</protocol>
+*		<local_port>17500</local_port>
+*		<remote_port>17500</remote_port>
+*		<service_name></service_name>
+*		<packets>8</packets>
+*	</item>
+*
+*/
     
-    //printf("Grabbed packet of length %d\n",header->len);
-    //printf("Recieved at ..... %s\n",ctime((const time_t*) header->ts->tv_sec)); 
+
     
     cap_dead = pcap_open_dead(DLT_EN10MB, 65535);
 
@@ -222,15 +373,18 @@ int main(int argc, char **argv)
     header.len = header.caplen;
     */
     
-    //while (1) {
+    char* udp_packet = create_udp_packet(70);
+    char* tcp_packet = create_tcp_packet(70);
+    
+    for (int i = 0; i < 6; i++) {
         /*
          * Create fake IP header and put UDP header
          * and payload in place
          */
 
         /* write packet to save file */
-        pcap_dump((u_char *) cap_dumper, header, (u_char *) packet);
-    //}
+        pcap_dump((u_char *) cap_dumper, header, (u_char *) udp_packet);
+    }
 
 
     pcap_close(cap_dead);
