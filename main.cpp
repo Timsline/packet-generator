@@ -15,6 +15,9 @@
 #include <string>
 #include "xmlparser.h"
 
+#include <regex>
+#include <iterator> 
+
 #include <pcap.h>
 
 using namespace std;
@@ -27,7 +30,6 @@ class IPXPacket {
 
 };
 
-
 int str_to_int(string text) {
     return stoi(text, NULL, 16);
 }
@@ -36,9 +38,42 @@ int str_to_int(string text, int base) {
     return stoi(text, NULL, base);
 }
 
+//00-00-00-00-00-00
+string parse_mac_address(string mac_address) {    
+    auto it = std::remove_if(std::begin(mac_address),std::end(mac_address),[](char c){return (c == '-');});
+    mac_address.erase(it, std::end(mac_address));
+   
+    return mac_address;
+}
+
+
+char * substr(string s, int x, int y)
+{
+    char *ret = (char*)malloc(18);
+    char * p = ret;
+    char * q = &s[x];
+    
+
+    
+    
+    while(x  < y)
+    {
+        *p++ = *q++;
+        x ++;
+    }
+    
+    *p++ = '\0';
+    
+    return ret;
+}
+
 char* create_udp_packet(int size_of_packet) {
     char* packet;
     packet = (char*)malloc((size_of_packet)*1);
+    
+    //char* tmp = parse_mac_address("00-21-85-11-29-1b");
+    //packet = parse_mac_address("00-21-85-11-29-1b");
+    string mac = parse_mac_address("00-21-85-11-29-1b");
     
     // mac destination address to 00-00-00-00-00-00
     packet[0] = 0;
@@ -49,13 +84,15 @@ char* create_udp_packet(int size_of_packet) {
     packet[5] = 0;
     
     // set mac source address to 00-21-85-11-29-1b
-    packet[6] = str_to_int("00");
-    packet[7] = str_to_int("21");
-    packet[8] = str_to_int("85");
-    packet[9] = str_to_int("11");
-    packet[10] = str_to_int("29");
-    packet[11] = str_to_int("1b");    
-            
+    packet[6] = str_to_int(substr(mac,0,2));
+    packet[7] = str_to_int(substr(mac,2,4));
+    packet[8] = str_to_int(substr(mac,4,6));
+    packet[9] = str_to_int(substr(mac,6,8));
+    packet[10] = str_to_int(substr(mac,8,10));
+    packet[11] = str_to_int(substr(mac,10,12));    
+    for (int i = 6; i <= 11; i++) {
+        packet[i] = str_to_int(substr(mac,i,i+2));
+    }        
     // set IP protocol 0x0800
 
     packet[12]  = 0x08;
@@ -284,7 +321,7 @@ int main(int argc, char **argv)
     //ofstream pcap_file_new;
     char file_name[] = "packet.pcap";
 
-
+    //parse_mac_address("00-21-85-11-29-1b");
 
     // is called to open a ``savefile'' for writing. fname specifies the name of the file to open.
 
