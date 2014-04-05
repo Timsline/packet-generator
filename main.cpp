@@ -17,6 +17,7 @@
 
 #include <regex>
 #include <iterator> 
+#include <arpa/inet.h>
 
 #include <pcap.h>
 
@@ -26,6 +27,9 @@ string const UDP("UDP");
 string const TCP("TCP");
 string const PEP("PEP");
 
+// setup
+int const IPv4(0x45);
+
 int str_to_int(string text) {
     return stoi(text, NULL, 16);
 }
@@ -33,8 +37,6 @@ int str_to_int(string text) {
 int str_to_int(string text, int base) {
     return stoi(text, NULL, base);
 }
-
-//00-00-00-00-00-00
 
 string parse_mac_address(string mac_address) {
     auto it = std::remove_if(std::begin(mac_address), std::end(mac_address), [](char c) {
@@ -56,14 +58,48 @@ string parse_ipx_items(string ipx_item) {
 
 }
 
-string parse_ip_address(string ip_adddress) {
-    auto it = std::remove_if(std::begin(ip_adddress), std::end(ip_adddress), [](char c) {
-        return (c == '.');
-    });
-    ip_adddress.erase(it, std::end(ip_adddress));
+//string parse_ip_address(string ip_adddress) {
+//    auto it = std::remove_if(std::begin(ip_adddress), std::end(ip_adddress), [](char c) {
+//        return (c == '.');
+//    });
+//    ip_adddress.erase(it, std::end(ip_adddress));
+//
+//    return ip_adddress;
+//
+//}
 
-    return ip_adddress;
+u_char* parse_ip_addr(string ip_address) {
+    char ip1[3] = "";
+    char ip2[3] = "";
+    char ip3[3] = "";
+    char ip4[3] = "";
+    u_char* ip;
+    ip = (u_char*) malloc((4)*1);
 
+    int count = 0;
+    int j = 0;
+    for (int i = 0; i < ip_address.length(); i++) {
+
+        if (ip_address[i] == '.') {
+            count++;
+            j = -1;
+
+        } else {
+            if (count == 0)ip1[j] = ip_address[i];
+            else if (count == 1) ip2[j] = ip_address[i];
+            else if (count == 2) ip3[j] = ip_address[i];
+            else if (count == 3) ip4[j] = ip_address[i];
+        }
+        j++;
+    }
+    //nastavenie cielovej adresy
+
+    ip[0] = atoi(ip1);
+    ip[1] = atoi(ip2);
+    ip[2] = atoi(ip3);
+    ip[3] = atoi(ip4);
+
+    return ip;
 }
 
 char * substr(string s, int x, int y) {
@@ -84,7 +120,45 @@ char * substr(string s, int x, int y) {
     return ret;
 }
 
-u_char* create_ipx_packet(int size_of_packet,
+string dec_to_hexstr(string dec_str) {
+    string result;
+
+    long int decimalNumber = str_to_int(dec_str, 10);
+    long int default_num = decimalNumber;
+    long int quotient;
+    int i = 1, j, temp;
+
+
+
+    quotient = decimalNumber;
+
+    while (quotient != 0) {
+        temp = quotient % 16;
+
+        //To convert integer into character
+        if (temp < 10)
+            temp = temp + 48;
+        else
+            temp = temp + 55;
+
+        result += temp;
+        quotient = quotient / 16;
+    }
+    // 65536
+    if (default_num < 10 || ((default_num > 255) && (default_num < 2458)) || ((default_num > 65535) && (default_num < 629146))) {
+        result += "0";
+    }
+
+    // 16 - 255
+    if ((default_num > 15) && (default_num < 256)) {
+        result += "00";
+    }
+
+    return string(result.rbegin(), result.rend());
+
+}
+
+u_char* setup_ipx_packet(int size_of_packet,
         string local_mac_address,
         string remote_mac_address,
         string local_net_address,
@@ -131,15 +205,15 @@ u_char* create_ipx_packet(int size_of_packet,
     packet[14] = 0xff;
     packet[15] = 0xff;
 
-    // ipx packet lenght 0x01b0
-    packet[16] = 0x01;
-    packet[17] = 0xb0;
+    // ipx packet lenght max 0x01b0
+    packet[16] = 0x00;
+    packet[17] = 0x4e; // 3e
 
     // transport control
-    packet[18] = 0x00;
+    packet[18] = 0x03; // 3 hops
 
-    // packet type ipx 0x01
-    packet[19] = 0x01;
+    // packet type pep 0x04
+    packet[19] = 0x04;
 
     // destination network 30 09 80 00
     j = 0;
@@ -163,11 +237,15 @@ u_char* create_ipx_packet(int size_of_packet,
     packet[42] = str_to_int(substr(local_socket_address_new, 0, 2));
     packet[43] = str_to_int(substr(local_socket_address_new, 2, 4));
 
+    for (int i = 44; i <= 60; i++) {
+        packet[i] = 0x00;
+    }
+
 
     return packet;
 }
 
-u_char* create_udp_packet(int size_of_packet,
+u_char* setup_udp_packet(int size_of_packet,
         string local_mac_address,
         string remote_mac_address,
         string version,
@@ -218,107 +296,272 @@ u_char* create_udp_packet(int size_of_packet,
     packet[13] = 0x00;
 
     // IPv4 = 0x45
-    packet[14] = 0x45;
+    packet[14] = IPv4;
 
-    // ??
+    // diff services field
     packet[15] = 0x00;
 
     // length IP
     packet[16] = 0x00;
-    packet[17] = 0x00;
+    packet[17] = 0x28; // 40 bytes
 
     // identification
     packet[18] = 0x00;
     packet[19] = 0x00;
 
     // flags
-    packet[20] = 0x00;
+    packet[20] = 0x40; // dont fragment
 
-
+    // fragment offset
     packet[21] = 0x00;
 
     // Time To Live - TTL  128?
-    packet[22] = 0x40;
+    packet[22] = 0x80;
 
     // protocol UDP
-    packet[23] = str_to_int("17", 10);
+    packet[23] = 0x11;
 
-    // UDP header checksum
+    // IP header checksum
     packet[24] = 0x00;
     packet[25] = 0x00;
 
-    // IP source address 147.175.106.141
-    string local_address_new = parse_ip_address(local_address);
-    if (local_address_new.length() == 12) {
-        int j = 0;
-        for (int i = 26; i <= 29; i++) {
-            packet[i] = str_to_int(substr(local_address_new, j, j + 3), 10);
-            j += 3;
-        }
+    // IP source address
+    u_char* ipcko_local = parse_ip_addr(local_address);
+
+    for (int i = 26; i <= 29; i++) {
+        packet[i] = ipcko_local[i - 26];
     }
-
-
-
-    //    packet[26] = str_to_int("147", 10);
-    //    packet[27] = str_to_int("175", 10);
-    //    packet[28] = str_to_int("106", 10);
-    //    packet[29] = str_to_int("141", 10);
 
     // IP destination address
-    string remote_address_new = parse_ip_address(remote_address);
-    //if (remote_address_new.length() == 12) {
-    j = 0;
+    u_char* ipcko_remote = parse_ip_addr(remote_address);
     for (int i = 30; i <= 33; i++) {
-        packet[i] = str_to_int(substr(remote_address_new, j, j + 3), 10);
-        j += 3;
+        packet[i] = ipcko_remote[i - 30];
     }
-    //}
-    //    packet[30] = str_to_int("255", 10);
-    //    packet[31] = str_to_int("255", 10);
-    //    packet[32] = str_to_int("255", 10);
-    //    packet[33] = str_to_int("255", 10);
-
+    
     // UDP information
     // udp source port
-    packet[34] = str_to_int("44");
-    packet[35] = str_to_int("5c");
+    string local_port_new = dec_to_hexstr(local_port); // 44 5c
+    packet[34] = str_to_int(substr(local_port_new, 0, 2)); // D8E6
+    packet[35] = str_to_int(substr(local_port_new, 2, 4));
 
+
+
+    string remote_port_new = dec_to_hexstr(remote_port);
     // udp destination port
-    packet[36] = str_to_int("44");
-    packet[37] = str_to_int("5c");
+    packet[36] = str_to_int(substr(remote_port_new, 0, 2)); // 35
+    packet[37] = str_to_int(substr(remote_port_new, 2, 4));
 
     // udp length
     packet[38] = 0x00;
-    packet[39] = 0x14;
+    packet[39] = 0x14; // 20 bytes
 
     // check sum
-    packet[40] = 0x00;
-    packet[41] = 0x00;
+    packet[40] = 0x5a;
+    packet[41] = 0x11;
 
 
     // data 50:69:76:61:72:6e:69:6b:20:6a:65:20:68:6f:6d:6f:73:20:3a:44
-    packet[42] = 0x50;
-    packet[43] = 0x69;
-    packet[44] = 0x76;
-    packet[45] = 0x61;
+    packet[42] = 0x00;
+    packet[43] = 0x00;
+    packet[44] = 0x00;
+    packet[45] = 0x00;
 
-    packet[46] = 0x72;
-    packet[47] = 0x6e;
-    packet[48] = 0x69;
-    packet[49] = 0x6b;
-    packet[50] = 0x20;
-    packet[51] = 0x6a;
-    packet[52] = 0x65;
-    packet[53] = 0x20;
+    packet[46] = 0x00;
+    packet[47] = 0x00;
+    packet[48] = 0x00;
+    packet[49] = 0x00;
+    packet[50] = 0x00;
+    packet[51] = 0x00;
+    packet[52] = 0x00;
+    packet[53] = 0x00;
 
-    packet[54] = 0x68;
-    packet[55] = 0x6f;
-    packet[56] = 0x6d;
-    packet[57] = 0x6f;
-    packet[58] = 0x73;
-    packet[59] = 0x20;
-    packet[60] = 0x3a;
-    packet[61] = 0x44;
+    packet[54] = 0x00;
+    packet[55] = 0x00;
+    packet[56] = 0x00;
+    packet[57] = 0x00;
+    packet[58] = 0x00;
+    packet[59] = 0x00;
+    packet[60] = 0x00;
+    packet[61] = 0x00;
+
+
+    uint32_t sum = 0;
+    uint16_t word;
+    int i;
+
+    for (i = 26; i <= 39; i += 2) {
+        word = ((packet[i] << 8) & 0xff00) + (packet[i + 1] & 0xff);
+        sum += (uint32_t) word;
+    }
+    //	for (i = 12; i < 20; i += 2) {
+    //		word = ((packet[i] << 8) & 0xff00) + (packet[i+1] & 0xff);
+    //		sum += (uint32_t) word;
+    //	}
+
+    sum += 17 + 40 - 20;
+
+    while (sum >> 16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    sum = ~sum;
+
+    packet[40] = (sum & 0xff00) >> 8;
+    packet[41] = sum & 0xff;
+
+    return packet;
+}
+
+u_char* setup_tcp_packet(int size_of_packet,
+        string local_mac_address,
+        string remote_mac_address,
+        string version,
+        string local_address,
+        string remote_address,
+        string protocol_type,
+        string local_port,
+        string remote_port,
+        string service_name) {
+
+    u_char* packet;
+    packet = (u_char*) malloc((size_of_packet)*1);
+
+    //char* tmp = parse_mac_address("00-21-85-11-29-1b");
+    //packet = parse_mac_address("00-21-85-11-29-1b");
+    string local_mac_address_new = parse_mac_address(local_mac_address);
+    string remote_mac_address_new = parse_mac_address(remote_mac_address);
+
+    // mac destination address to 00-00-00-00-00-00
+    //    packet[0] = str_to_int(substr(remote_mac_address_new, 0, 2));
+    //    packet[1] = str_to_int(substr(remote_mac_address_new, 2, 4));
+    //    packet[2] = str_to_int(substr(remote_mac_address_new, 4, 6));
+    //    packet[3] = str_to_int(substr(remote_mac_address_new, 6, 8));
+    //    packet[4] = str_to_int(substr(remote_mac_address_new, 8, 10));
+    //    packet[5] = str_to_int(substr(remote_mac_address_new, 10, 12));
+    int j = 0;
+    for (int i = 0; i <= 5; i++) {
+        packet[i] = str_to_int(substr(remote_mac_address_new, j, j + 2));
+        j += 2;
+    }
+
+    // set mac source address to 00-21-85-11-29-1b
+    //    packet[6] = str_to_int(substr(local_mac_address_new, 0, 2));
+    //    packet[7] = str_to_int(substr(local_mac_address_new, 2, 4));
+    //    packet[8] = str_to_int(substr(local_mac_address_new, 4, 6));
+    //    packet[9] = str_to_int(substr(local_mac_address_new, 6, 8));
+    //    packet[10] = str_to_int(substr(local_mac_address_new, 8, 10));
+    //    packet[11] = str_to_int(substr(local_mac_address_new, 10, 12));
+    j = 0;
+    for (int i = 6; i <= 11; i++) {
+        packet[i] = str_to_int(substr(local_mac_address_new, j, j + 2));
+        j += 2;
+    }
+
+
+    // set IP protocol 0x0800
+    packet[12] = 0x08;
+    packet[13] = 0x00;
+
+    // IPv4 = 0x45
+    packet[14] = IPv4;
+
+    // differentiated services field
+    packet[15] = 0x00;
+
+    // length IP
+    packet[16] = 0x00;
+    packet[17] = 0x28; // 40 bytes
+
+    // identification 3a50
+    packet[18] = 0x3a;
+    packet[19] = 0x50;
+
+    // flags
+    packet[20] = 0x40; // dont fragment
+
+    // fragment offset
+    packet[21] = 0x00;
+
+    // Time To Live - TTL  128?
+    packet[22] = 0x80;
+
+    // protocol TCP
+    packet[23] = 0x06;
+
+    // TCP header checksum // TODO
+    packet[24] = 0x00;
+    packet[25] = 0x00;
+
+    // IP source address
+    u_char* ipcko_local = parse_ip_addr(local_address);
+
+    for (int i = 26; i <= 29; i++) {
+        packet[i] = ipcko_local[i - 26];
+    }
+
+    // IP destination address
+    u_char* ipcko_remote = parse_ip_addr(remote_address);
+    for (int i = 30; i <= 33; i++) {
+        packet[i] = ipcko_remote[i - 30];
+    }
+
+    // TCP information
+    // TCP source port
+    string local_port_new = dec_to_hexstr(local_port);
+    packet[34] = str_to_int(substr(local_port_new, 0, 2));
+    packet[35] = str_to_int(substr(local_port_new, 0, 2));
+
+    // TCP destination port
+    string remote_port_new = dec_to_hexstr(remote_port);
+    packet[36] = str_to_int(substr(remote_port_new, 0, 2));
+    packet[37] = str_to_int(substr(remote_port_new, 0, 2));
+
+    // TCP sequence number: 0 (relative) example: 0x1626d405
+    packet[38] = 0x16;
+    packet[39] = 0x26;
+    packet[40] = 0xd4;
+    packet[41] = 0x05;
+
+
+    // acknowledgment number : 1 example: 0x59042021
+    packet[42] = 0x59;
+    packet[43] = 0x04;
+    packet[44] = 0x20;
+    packet[45] = 0x21;
+
+    // tcp header lenght
+    packet[46] = 0x50; // 20 bytes
+
+    // flags 0x01f
+    packet[47] = 0x1f; // flags
+
+    // window size
+    packet[48] = 0x01; // example number
+    packet[49] = 0x00;
+
+    // checksum
+    packet[50] = 0x00;
+    packet[51] = 0x00;
+
+    // neviem urgent pointer
+    packet[52] = 0x00;
+    packet[53] = 0x00;
+
+    // 54-65 options
+
+    // no operation
+    packet[54] = 0x00;
+    packet[55] = 0x00;
+
+    packet[56] = 0x00;
+    packet[57] = 0x00;
+    packet[58] = 0x00;
+    packet[59] = 0x00;
+    packet[60] = 0x00;
+    packet[61] = 0x00;
+    packet[62] = 0x00;
+    packet[63] = 0x00;
+    //packet[64] = 0x00;
+    //packet[65] = 0x00;
 
     return packet;
 }
@@ -370,7 +613,7 @@ int main(int argc, char **argv) {
     header->ts = *ts;
 
     // this open and parse the XML file:
-    XMLNode xMainNode = XMLNode::openFileHelper("/home/erich/Desktop/ks2.xml", "packets_summary");
+    XMLNode xMainNode = XMLNode::openFileHelper("packets.xml", "packets_summary");
 
     int count_items = xMainNode.nChildNode();
 
@@ -416,7 +659,7 @@ int main(int argc, char **argv) {
 
         if (!protocol_type.compare(UDP)) {
             cout << "Vytvaram UDP packet" << endl;
-            u_char* udp_packet = create_udp_packet(70,
+            u_char* udp_packet = setup_udp_packet(70,
                     local_mac_address,
                     remote_mac_address,
                     protocol,
@@ -438,11 +681,31 @@ int main(int argc, char **argv) {
             }
         }
         if (!protocol_type.compare(TCP)) {
+            cout << "Vytvaram TCP packet" << endl;
+            u_char* tcp_packet = setup_tcp_packet(70,
+                    local_mac_address,
+                    remote_mac_address,
+                    version,
+                    local_address,
+                    remote_address,
+                    protocol_type,
+                    local_port,
+                    remote_port,
+                    service_name);
 
+            for (int i = 0; i < count_packets; i++) {
+                /*
+                 * Create fake IP header and put UDP header
+                 * and payload in place
+                 */
+
+                /* write packet to save file */
+                pcap_dump((u_char *) pcap_dump_ip, header, tcp_packet);
+            }
         }
         if (!protocol_type.compare(PEP)) {
             cout << "Vytvaram IPX packet" << endl;
-            u_char* ipx_packet = create_ipx_packet(50,
+            u_char* ipx_packet = setup_ipx_packet(70,
                     local_mac_address,
                     remote_mac_address,
                     local_net_address,
@@ -480,50 +743,10 @@ int main(int argc, char **argv) {
         remote_net_address = "";
         remote_socket_address = "";
     }
-    //    
-    //    XMLNode xNode=xMainNode.getChildNode(0);
-    //    printf("Index: '%s'\n", xNode.getChildNode("index").getText());
-    //    printf("Frame type: '%s'\n", xNode.getChildNode(4).getText());
-    //    printf("Local address: '%s'\n", xNode.getChildNode(9).getText());
-
-
-    /*
-     *   <item>
-     *       <index>1</index>
-     *		<frame_type>Ethernet</frame_type>
-     *               <local_mac_address>00-21-85-11-29-1b</local_mac_address>
-     *		<remote_mac_address></remote_mac_address>
-     *		<protocol>IP</protocol>
-     *		<version>4</version>
-     *		<local_address>147.175.106.141</local_address>
-     *		<remote_address>255.255.255.255</remote_address>
-     *		<protocol_type>UDP</protocol_type>
-     *		<protocol>UDP</protocol>
-     *		<local_port>17500</local_port>
-     *		<remote_port>17500</remote_port>
-     *		<service_name></service_name>
-     *		<packets>8</packets>
-     *	</item>
-     *
-     */
-
-
-
-
-
-
 
 
     pcap_close(pcap_dead_ip);
     pcap_dump_close(pcap_dump_ip);
-
-
-
-
-    // pcap_file_new.open("packet.pcap", ios::binary);
-
-
-    //pcap_file_new.close();
 
     return 0;
 }
