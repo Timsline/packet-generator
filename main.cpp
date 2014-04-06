@@ -16,8 +16,7 @@
 #include "xmlparser.h"
 
 #include <regex>
-#include <iterator> 
-#include <arpa/inet.h>
+#include <iterator>
 
 #include <pcap.h>
 
@@ -144,14 +143,13 @@ string dec_to_hexstr(string dec_str) {
         result += temp;
         quotient = quotient / 16;
     }
-    // 65536
-    if (default_num < 10 || ((default_num > 255) && (default_num < 2458)) || ((default_num > 65535) && (default_num < 629146))) {
-        result += "0";
-    }
 
-    // 16 - 255
-    if ((default_num > 15) && (default_num < 256)) {
+    if (result.length() == 1) {
+        result += "000";
+    } else if (result.length() == 2) {
         result += "00";
+    } else if (result.length() == 3) {
+        result += "0";
     }
 
     return string(result.rbegin(), result.rend());
@@ -337,6 +335,22 @@ u_char* setup_udp_packet(int size_of_packet,
     for (int i = 30; i <= 33; i++) {
         packet[i] = ipcko_remote[i - 30];
     }
+
+    uint32_t sum_ip = 0;
+    uint16_t word_ip;
+
+    for (int i = 14; i <= 33; i += 2) {
+        word_ip = ((packet[i] << 8) & 0xff00) + (packet[i + 1] & 0xff);
+        sum_ip += (uint32_t) word_ip;
+    }
+
+    while (sum_ip >> 16)
+        sum_ip = (sum_ip & 0xffff) + (sum_ip >> 16);
+
+    sum_ip = ~sum_ip;
+
+    packet[24] = (sum_ip & 0xff00) >> 8;
+    packet[25] = sum_ip & 0xff;
     
     // UDP information
     // udp source port
@@ -487,7 +501,7 @@ u_char* setup_tcp_packet(int size_of_packet,
     // protocol TCP
     packet[23] = 0x06;
 
-    // TCP header checksum // TODO
+    // ip header checksum // TODO
     packet[24] = 0x00;
     packet[25] = 0x00;
 
@@ -504,16 +518,34 @@ u_char* setup_tcp_packet(int size_of_packet,
         packet[i] = ipcko_remote[i - 30];
     }
 
+    uint32_t sum_ip = 0;
+    uint16_t word_ip;
+
+    for (int i = 14; i <= 33; i += 2) {
+        word_ip = ((packet[i] << 8) & 0xff00) + (packet[i + 1] & 0xff);
+        sum_ip += (uint32_t) word_ip;
+    }
+
+    while (sum_ip >> 16)
+        sum_ip = (sum_ip & 0xffff) + (sum_ip >> 16);
+
+    sum_ip = ~sum_ip;
+
+    packet[24] = (sum_ip & 0xff00) >> 8;
+    packet[25] = sum_ip & 0xff;
+    
     // TCP information
     // TCP source port
     string local_port_new = dec_to_hexstr(local_port);
+    cout << local_port << endl;
+    cout << local_port_new << endl;
     packet[34] = str_to_int(substr(local_port_new, 0, 2));
-    packet[35] = str_to_int(substr(local_port_new, 0, 2));
+    packet[35] = str_to_int(substr(local_port_new, 2, 4));
 
     // TCP destination port
     string remote_port_new = dec_to_hexstr(remote_port);
     packet[36] = str_to_int(substr(remote_port_new, 0, 2));
-    packet[37] = str_to_int(substr(remote_port_new, 0, 2));
+    packet[37] = str_to_int(substr(remote_port_new, 2, 4));
 
     // TCP sequence number: 0 (relative) example: 0x1626d405
     packet[38] = 0x16;
@@ -562,6 +594,29 @@ u_char* setup_tcp_packet(int size_of_packet,
     packet[63] = 0x00;
     //packet[64] = 0x00;
     //packet[65] = 0x00;
+
+    uint32_t sum = 0;
+    uint16_t word;
+    int i;
+
+    for (i = 26; i <= 49; i += 2) {
+        word = ((packet[i] << 8) & 0xff00) + (packet[i + 1] & 0xff);
+        sum += (uint32_t) word;
+    }
+    //	for (i = 12; i < 20; i += 2) {
+    //		word = ((packet[i] << 8) & 0xff00) + (packet[i+1] & 0xff);
+    //		sum += (uint32_t) word;
+    //	}
+
+    sum += 6 + 40 - 20;
+
+    while (sum >> 16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    sum = ~sum;
+
+    packet[50] = (sum & 0xff00) >> 8;
+    packet[51] = sum & 0xff;
 
     return packet;
 }
