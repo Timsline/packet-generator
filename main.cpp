@@ -50,7 +50,7 @@ Zoznam pouzitych premennych a ich komentovany vyznam (vyplnit podla vasho kodu!!
 
 vsetky premenne mam pochopitelne pomenovane
 
-*/
+ */
 
 
 /*
@@ -75,14 +75,18 @@ vsetky premenne mam pochopitelne pomenovane
 #include <unistd.h>
 
 #include <pcap.h>
+#include <array>
+#include <vector>
 
 using namespace std;
 
+// setup
+int const IPv4(0x45);
 string const UDP("UDP");
 string const TCP("TCP");
 string const PEP("PEP");
 
-
+// colors
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */
@@ -100,9 +104,6 @@ string const PEP("PEP");
 #define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
-
-// setup
-int const IPv4(0x45);
 
 int str_to_int(string text) {
     return stoi(text, NULL, 16);
@@ -379,12 +380,12 @@ u_char* setup_udp_packet(int size_of_packet,
         sum_ip = (sum_ip & 0xffff) + (sum_ip >> 16);
 
     sum_ip = ~sum_ip;
-    
+
     packet[24] = (sum_ip & 0xff00) >> 8;
     packet[25] = sum_ip & 0xff;
-    
+
     cout << GREEN << "[OK]" << RESET << " Vypocitany checksum pre IP hlavicku UDP" << endl;
-    
+
     // UDP information
     // udp source port
     string local_port_new = dec_to_hexstr(local_port); // 44 5c
@@ -548,7 +549,7 @@ u_char* setup_tcp_packet(int size_of_packet,
 
     packet[24] = (sum_ip & 0xff00) >> 8;
     packet[25] = sum_ip & 0xff;
-    
+
     cout << GREEN << "[OK]" << RESET << " Vypocitany checksum pre IP hlavicku TCP" << endl;
 
     // TCP information
@@ -628,9 +629,9 @@ u_char* setup_tcp_packet(int size_of_packet,
 
     packet[50] = (sum & 0xff00) >> 8;
     packet[51] = sum & 0xff;
-    
+
     cout << GREEN << "[OK]" << RESET << " Vypocitany checksum pre TCP" << endl;
-    
+
     return packet;
 }
 
@@ -656,7 +657,7 @@ void info_program() {
     cout << RESET << endl;
 }
 
-int main(int argc, char **argv) {
+void create_packet_from_xml() {
     string index;
     string frame_type;
     string local_mac_address;
@@ -676,10 +677,7 @@ int main(int argc, char **argv) {
     string local_socket_address;
     string remote_net_address;
     string remote_socket_address;
-    
-    // info o programe
-    info_program();
-    
+
     cout << GREEN << "[OK]" << RESET << " Vytvorene premenne pre XML" << endl;
 
     char pcap_name[] = "packet.pcap";
@@ -691,41 +689,39 @@ int main(int argc, char **argv) {
     int index1;
     int c;
 
-    while ((c = getopt(argc, argv, "f:")) != -1)
-        switch (c) {
-                //            case 'b':
-                //                bflag = 13;
-                //                break;
-            case 'f':
-                cvalue = optarg;
-                xml_name = (char*) malloc((strlen(optarg))*1);
-                xml_name = optarg;
-                break;
-            case '?':
-                if (optopt == 'f')
-                    fprintf(stderr, "Spravne volanie: %s -%c <filename>\n", argv[0], optopt);
-                else if (isprint(optopt))
-                    fprintf(stderr, "Neznamy parameter `-%f'.\n", optopt);
-                else
-                    fprintf(stderr,
-                        "Neznamy znak `\\x%x'.\n",
-                        optopt);
-                return 1;
-            default:
-                abort();
-        }
+    //    while ((c = getopt(argc, argv, "f:")) != -1)
+    //        switch (c) {
+    //                //            case 'b':
+    //                //                bflag = 13;
+    //                //                break;
+    //            case 'f':
+    //                cvalue = optarg;
+    //                xml_name = (char*) malloc((strlen(optarg))*1);
+    //                xml_name = optarg;
+    //                break;
+    //            case '?':
+    //                if (optopt == 'f')
+    //                    fprintf(stderr, "Spravne volanie: %s -%c <filename>\n", argv[0], optopt);
+    //                else if (isprint(optopt))
+    //                    fprintf(stderr, "Neznamy parameter `-%f'.\n", optopt);
+    //                else
+    //                    fprintf(stderr,
+    //                        "Neznamy znak `\\x%x'.\n",
+    //                        optopt);
+    //                return 1;
+    //            default:
+    //                abort();
+    //        }
+    //
+    //    if (argc < 2) {
+    xml_name = (char*) malloc(12);
+    strcpy(xml_name, "packets.xml");
+    //    } 
 
-    if (argc < 2) {
-        xml_name = (char*) malloc(12);
-        strcpy(xml_name, "packets.xml");
-    } 
-         
-        
-    for (index1 = optind; index1 < argc; index1++)
-        printf("Non-option argument %s\n", argv[index1]);
 
-    
-        
+    //    for (index1 = optind; index1 < argc; index1++)
+    //        printf("Non-option argument %s\n", argv[index1]);
+
     pcap_t *pcap_dead_ip;
     pcap_dumper_t *pcap_dump_ip;
 
@@ -735,7 +731,7 @@ int main(int argc, char **argv) {
     pcap_dump_ip = pcap_dump_open(pcap_dead_ip, pcap_name);
 
     cout << GREEN << "[OK]" << RESET << " Vytvoreny vystupny subor pre wireshark: " << pcap_name << endl << endl;
-    
+
     timeval *ts = (timeval*) malloc(sizeof (timeval));
     ts->tv_sec = time(NULL);
     ts->tv_usec = 0;
@@ -752,26 +748,26 @@ int main(int argc, char **argv) {
     XMLNode xMainNode = XMLNode::openFileHelper(xml_name, "packets_summary");
 
     cout << GREEN << "[OK]" << RESET << " Nacitany XML subor: " << xml_name << endl << endl;
-    
-    
+
+
     int count_items = xMainNode.nChildNode();
 
     for (int i = 0; i < count_items; i++) {
         XMLNode node = xMainNode.getChildNode(i);
         cout << YELLOW << "[Start]" << RESET << " Nacitavanie dat z XML" << endl;
-        
+
         index = node.getChildNode("index").getText();
         cout << GREEN << "[OK]" << RESET << " Nacitany index: " << index << endl;
-        
+
         protocol = node.getChildNode("protocol").getText();
         cout << GREEN << "[OK]" << RESET << " Nacitany protocol: " << protocol << endl;
-        
+
         protocol_type = node.getChildNode("protocol_type").getText();
         cout << GREEN << "[OK]" << RESET << " Nacitany protocol_type: " << protocol_type << endl;
-        
+
         local_mac_address = node.getChildNode("local_mac_address").getText();
         cout << GREEN << "[OK]" << RESET << " Nacitane local_mac_address: " << local_mac_address << endl;
-        
+
         if (node.getChildNode("remote_mac_address").getText() != NULL) {
             remote_mac_address = node.getChildNode("remote_mac_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane remote_mac_address: " << remote_mac_address << endl;
@@ -779,8 +775,8 @@ int main(int argc, char **argv) {
             remote_mac_address = set_broadcast_mac_address();
             cout << GREEN << "[OK]" << RESET << " remote_mac_address je prazdna, nastavujem: " << remote_mac_address << endl;
         }
-        
-        
+
+
         frame_type = node.getChildNode("frame_type").getText();
         cout << GREEN << "[OK]" << RESET << " Nacitany frame_type: " << frame_type << endl;
 
@@ -788,19 +784,19 @@ int main(int argc, char **argv) {
             cout << YELLOW << "[UDP/TCP]" << RESET << " Specificke udaje pre UDP/TCP: " << endl;
             version = node.getChildNode("version").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane version: " << version << endl;
-            
+
             local_address = node.getChildNode("local_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane local_address: " << local_address << endl;
-            
+
             remote_address = node.getChildNode("remote_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane remote_address: " << remote_address << endl;
-            
+
             local_port = node.getChildNode("local_port").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane local_port: " << local_port << endl;
-            
+
             remote_port = node.getChildNode("remote_port").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane remote_port: " << remote_port << endl;
-            
+
             if (node.getChildNode("service_name").getText() != NULL) {
                 service_name = node.getChildNode("service_name").getText();
             } else {
@@ -810,26 +806,26 @@ int main(int argc, char **argv) {
 
         } else if (!protocol_type.compare(PEP)) {
             cout << YELLOW << "[PEP]" << RESET << " Specificke udaje pre (IPX) PEP: " << endl;
-            
+
             local_net_address = node.getChildNode("local_net_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane local_net_address: " << local_net_address << endl;
-            
+
             local_socket_address = node.getChildNode("local_socket_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane local_socket_address: " << local_socket_address << endl;
-            
+
             remote_net_address = node.getChildNode("remote_net_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane remote_net_address: " << remote_net_address << endl;
-            
+
             remote_socket_address = node.getChildNode("remote_socket_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane remote_socket_address: " << remote_socket_address << endl;
         }
-        
+
         cout << YELLOW << "[Done]" << RESET << " Nacitane udaje pre packet: " << protocol_type << endl;
-        
+
         packets = node.getChildNode("packets").getText();
         cout << GREEN << "[OK]" << RESET << " Pocet packetov pre " << protocol_type << " je " << packets << endl;
 
-        
+
         int count_packets = str_to_int(packets, 10);
 
         if (!protocol_type.compare(UDP)) {
@@ -843,6 +839,8 @@ int main(int argc, char **argv) {
                     local_port,
                     remote_port,
                     service_name);
+
+
 
             for (int i = 0; i < count_packets; i++) {
                 /* write packet to save file */
@@ -906,7 +904,624 @@ int main(int argc, char **argv) {
 
     pcap_close(pcap_dead_ip);
     pcap_dump_close(pcap_dump_ip);
-    cout << BLUE << "[Done] Vsetky packety boli zapisane do: " << pcap_name  << RESET << endl;
+    cout << BLUE << "[Done] Vsetky packety boli zapisane do: " << pcap_name << RESET << endl;
+
+}
+
+void read_packet_from_xml() {
+    string index = "";
+    string frame_type = "";
+    string local_mac_address = "";
+    string remote_mac_address = "";
+    string protocol = "";
+    string version = "";
+    string local_address = "";
+    string remote_address = "";
+    string protocol_type = "";
+    string local_port = "";
+    string remote_port = "";
+    string service_name = "";
+    string packets = "";
+
+    //ipx
+    string local_net_address;
+    string local_socket_address;
+    string remote_net_address;
+    string remote_socket_address;
+
+    // read pcap file    
+    pcap_t* opened_file;
+    char errbuf[PCAP_ERRBUF_SIZE];
+
+    pcap_t *pcap_dead_ip;
+    pcap_dumper_t *pcap_dump_ip;
+
+    // pole stiahnutych pcap
+    u_char array[100][70];
+
+    const u_char* data;
+    pcap_t* r_d;
+
+    timeval *ts_h = (timeval*) malloc(sizeof (timeval));
+    ts_h->tv_sec = time(NULL);
+    ts_h->tv_usec = 0;
+
+    //creation of header
+    pcap_pkthdr *r_h = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
+    r_h->caplen = 62;
+    r_h->len = 62;
+    r_h->ts = *ts_h;
+
+
+    XMLNode xMainNode = XMLNode::openFileHelper("change.xml", "configure_summary");
+
+    cout << GREEN << "[OK]" << RESET << " Nacitany XML subor: " << "change.xml" << endl << endl;
+
+
+    int count_items = xMainNode.nChildNode();
+
+    int filter_parameters = 0;
+    int change_parameters = 0;
+
+    // otvorenie suboru na citanie
+    if ((opened_file = pcap_open_offline("packet.pcap", errbuf)) == NULL) {
+        cout << "Subor sa nepodarilo otvorit.\n" << endl;
+        return;
+    } else
+        cout << "Subor sa podarilo otvorit.\n" << endl;
+
+    int numberOfRows = 0;
+    while (pcap_next_ex(opened_file, &r_h, &data) >= 0) {
+        //conversion to string 
+        //cout << endl << "Nacitany packet ";
+        for (int i = 0; i < 70; i++) {
+            array[numberOfRows][i] = data[i];
+            //printf("%02X", tmp[i]);
+        }
+        numberOfRows++;
+    }
+
+    //    cout << "zac matrix" << endl;
+    //    
+    //    for (int r = 0; r < y; r++) {
+    //        for (int col = 0; col < 70; col++) {
+    //            printf("%02X", array[r][col]);
+    //        }
+    //    }
+    //    
+    //    cout << "cislo: " << y << endl;
+    //    
+    //    cout << "kon matrix" << endl;
+
+
+    for (int i = 0; i < count_items; i++) {
+        XMLNode node = xMainNode.getChildNode(i);
+        cout << YELLOW << "[Start]" << RESET << " Nacitavanie dat z XML" << endl;
+
+
+        // filter parameters 
+        if (node.getChildNode("filter_parameters").getChildNode("frame_type").getText() != NULL) {
+            frame_type = node.getChildNode("filter_parameters").getChildNode("frame_type").getText();
+        } else {
+            cout << "Filter parameter frame_type nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("local_mac_address").getText() != NULL) {
+            local_mac_address = node.getChildNode("filter_parameters").getChildNode("local_mac_address").getText();
+        } else {
+            cout << "Filter parameter local_mac_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("remote_mac_address").getText() != NULL) {
+            remote_mac_address = node.getChildNode("filter_parameters").getChildNode("remote_mac_address").getText();
+        } else {
+            cout << "Filter parameter remote_mac_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("protocol").getText() != NULL) {
+            protocol = node.getChildNode("filter_parameters").getChildNode("protocol").getText();
+        } else {
+            cout << "Filter parameter protocol nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("protocol_type").getText() != NULL) {
+            local_port = node.getChildNode("filter_parameters").getChildNode("protocol_type").getText();
+        } else {
+            cout << "Filter parameter protocol_type nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("local_address").getText() != NULL) {
+            local_address = node.getChildNode("filter_parameters").getChildNode("local_address").getText();
+        } else {
+            cout << "Filter parameter local_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("remote_address").getText() != NULL) {
+            remote_address = node.getChildNode("filter_parameters").getChildNode("remote_address").getText();
+        } else {
+            cout << "Filter parameter remote_address nie je zadany" << endl;
+        }
+
+
+        if (node.getChildNode("filter_parameters").getChildNode("local_port").getText() != NULL) {
+            local_port = node.getChildNode("filter_parameters").getChildNode("local_port").getText();
+        } else {
+            cout << "Filter parameter local_port nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("remote_port").getText() != NULL) {
+            remote_port = node.getChildNode("filter_parameters").getChildNode("remote_port").getText();
+        } else {
+            cout << "Filter parameter remote_port nie je zadany" << endl;
+        }
+
+
+
+        // change parameters
+        if (node.getChildNode("change_parameters").getChildNode("local_mac_address").getText() != NULL) {
+            local_mac_address = node.getChildNode("change_parameters").getChildNode("local_mac_address").getText();
+            cout << local_mac_address << endl;
+        } else {
+            cout << "Change parameter local_mac_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("remote_mac_address").getText() != NULL) {
+            remote_mac_address = node.getChildNode("change_parameters").getChildNode("remote_mac_address").getText();
+            cout << remote_mac_address << endl;
+        } else {
+            cout << "Change parameter remote_mac_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("local_address").getText() != NULL) {
+            local_address = node.getChildNode("change_parameters").getChildNode("local_address").getText();
+            cout << local_address << endl;
+        } else {
+            cout << "Change parameter local_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("remote_address").getText() != NULL) {
+            remote_address = node.getChildNode("change_parameters").getChildNode("remote_address").getText();
+            cout << remote_address << endl;
+        } else {
+            cout << "Change parameter remote_address nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("local_port").getText() != NULL) {
+            local_port = node.getChildNode("change_parameters").getChildNode("local_port").getText();
+            cout << local_port << endl;
+        } else {
+            cout << "Change parameter local_port nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("remote_port").getText() != NULL) {
+            remote_port = node.getChildNode("change_parameters").getChildNode("remote_port").getText();
+            cout << remote_port << endl;
+        } else {
+            cout << "Change parameter remote_port nie je zadany" << endl;
+        }
+
+
+        // tu nacitam packety z pcap po jednom a kazdy nacitany paket hned porovnat s filtrom
+        // ak sa zhoduje tak ho hned zmenit a dump a citat dalsi
+
+
+        //cout << "prot: " << protocol << endl;
+        if (!protocol.compare("TCP")) {
+            cout << "som tcp packet" << endl;
+
+            for (int r = 0; r < numberOfRows; r++) {
+                if (array[r][23] == 0x06) {
+                    u_char* ip;
+                    if (local_address.length() != 0) {
+                        ip = parse_ip_addr(local_address);
+
+
+
+
+
+                        if (array[r][26] == ip[0] && array[r][27] == ip[1] && array[r][28] == ip[2] && array[r][29] == ip[3]) {
+                            //                            printf("%03d.", array[r][26]);
+                            //                            printf("%03d.", array[r][27]);
+                            //                            printf("%03d.", array[r][28]);
+                            //                            printf("%03d.\n", array[r][29]);
+                            if (remote_port != "") {
+                                // change parameters
+                                string rp = dec_to_hexstr(remote_port);
+                                array[r][36] = str_to_int(rp.substr(0, 2));
+                                array[r][37] = str_to_int(rp.substr(2, 2));
+
+                            }
+
+
+                        }
+                    }
+                }
+            }
+
+        } else if (!protocol.compare("UDP")) {
+            cout << "som udp packet" << endl;
+
+
+            for (int r = 0; r < numberOfRows; r++) {
+                if (array[r][23] == 0x11) {
+
+                    u_char* ip;
+                    if (local_address.length() != 0) {
+                        ip = parse_ip_addr(local_address);
+
+                        if (array[r][26] == ip[0] && array[r][27] == ip[1] && array[r][28] == ip[2] && array[r][29] == ip[3]) {
+
+                            printf("%03d.", array[r][26]);
+                            printf("%03d.", array[r][27]);
+                            printf("%03d.", array[r][28]);
+                            printf("%03d\n", array[r][29]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // create new pcap
+
+
+        pcap_dead_ip = pcap_open_dead(DLT_EN10MB, 65535);
+
+        // create the output file
+        pcap_dump_ip = pcap_dump_open(pcap_dead_ip, "changed.pcap");
+
+
+        timeval *ts = (timeval*) malloc(sizeof (timeval));
+        ts->tv_sec = time(NULL);
+        ts->tv_usec = 0;
+
+        //creation of header
+        pcap_pkthdr *header = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
+        header->caplen = 62;
+        header->len = 62;
+        header->ts = *ts;
+
+        for (int i = 0; i < numberOfRows; i++) {
+            /* write packet to save file */
+            pcap_dump((u_char *) pcap_dump_ip, header, array[i]);
+            // ma velkost array[20][70]
+        }
+
+
+
+
+
+
+
+        index = "";
+        frame_type = "";
+        local_mac_address = "";
+        remote_mac_address = "";
+        protocol = "";
+        version = "";
+        local_address = "";
+        remote_address = "";
+        protocol_type = "";
+        local_port = "";
+        remote_port = "";
+        service_name = "";
+        service_name = "";
+        packets = "";
+        local_net_address = "";
+        local_socket_address = "";
+        remote_net_address = "";
+        remote_socket_address = "";
+
+    }
+    pcap_close(pcap_dead_ip);
+    pcap_dump_close(pcap_dump_ip);
+}
+
+int main(int argc, char **argv) {
+    // tcp/udp
+    string index;
+    string frame_type;
+    string local_mac_address;
+    string remote_mac_address;
+    string protocol;
+    string version;
+    string local_address;
+    string remote_address;
+    string protocol_type;
+    string local_port;
+    string remote_port;
+    string service_name;
+    string packets;
+
+    //ipx
+    string local_net_address;
+    string local_socket_address;
+    string remote_net_address;
+    string remote_socket_address;
+
+    // info o programe
+    info_program();
+
+    //    cout << GREEN << "[OK]" << RESET << " Vytvorene premenne pre XML" << endl;
+    //
+    //    char pcap_name[] = "packet.pcap";
+    //    char* xml_name;
+    //
+    //
+    //
+    //    char *cvalue = NULL;
+    //    int index1;
+    //    int c;
+    //
+    ////    while ((c = getopt(argc, argv, "f:")) != -1)
+    ////        switch (c) {
+    ////                //            case 'b':
+    ////                //                bflag = 13;
+    ////                //                break;
+    ////            case 'f':
+    ////                cvalue = optarg;
+    ////                xml_name = (char*) malloc((strlen(optarg))*1);
+    ////                xml_name = optarg;
+    ////                break;
+    ////            case '?':
+    ////                if (optopt == 'f')
+    ////                    fprintf(stderr, "Spravne volanie: %s -%c <filename>\n", argv[0], optopt);
+    ////                else if (isprint(optopt))
+    ////                    fprintf(stderr, "Neznamy parameter `-%f'.\n", optopt);
+    ////                else
+    ////                    fprintf(stderr,
+    ////                        "Neznamy znak `\\x%x'.\n",
+    ////                        optopt);
+    ////                return 1;
+    ////            default:
+    ////                abort();
+    ////        }
+    ////
+    ////    if (argc < 2) {
+    ////        xml_name = (char*) malloc(12);
+    ////        strcpy(xml_name, "packets.xml");
+    ////    } 
+    //         
+    //        
+    //    for (index1 = optind; index1 < argc; index1++)
+    //        printf("Non-option argument %s\n", argv[index1]);
+
+    int choice = 0;
+    do {
+        //system("clear");
+        cout << "\nmenu" << endl;
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                system("clear");
+                //cout << "jednicka";
+                create_packet_from_xml();
+                break;
+            case 2:
+                system("clear");
+                read_packet_from_xml();
+                break;
+
+            case 3:
+                return 0;
+
+        }
+
+    } while (choice != 3);
+
+    //    // read pcap file    
+    //    pcap_t* opened_file; 
+    //    char errbuf[PCAP_ERRBUF_SIZE];
+    //    
+    //    
+    //    opened_file = pcap_open_offline(pcap_name, errbuf);
+    //    
+    //    
+    //    const u_char* data;
+    //    pcap_t* r_d;
+    //    
+    //    timeval *ts_h = (timeval*) malloc(sizeof (timeval));
+    //    ts_h->tv_sec = time(NULL);
+    //    ts_h->tv_usec = 0;
+    //
+    //    //creation of header
+    //    pcap_pkthdr *r_h = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
+    //    r_h->caplen = 62;
+    //    r_h->len = 62;
+    //    r_h->ts = *ts_h;
+    //    
+    //    data = pcap_next(opened_file, r_h);
+    //    
+    //    cout << data[1] << endl;
+    //
+    //    return 0;
+    //        
+    //        
+    //    // end of reading    
+
+    //    pcap_t *pcap_dead_ip;
+    //    pcap_dumper_t *pcap_dump_ip;
+    //
+    //    pcap_dead_ip = pcap_open_dead(DLT_EN10MB, 65535);
+    //
+    //    // create the output file
+    //    pcap_dump_ip = pcap_dump_open(pcap_dead_ip, pcap_name);
+    //
+    //    cout << GREEN << "[OK]" << RESET << " Vytvoreny vystupny subor pre wireshark: " << pcap_name << endl << endl;
+    //    
+    //    timeval *ts = (timeval*) malloc(sizeof (timeval));
+    //    ts->tv_sec = time(NULL);
+    //    ts->tv_usec = 0;
+    //
+    //    //creation of header
+    //    pcap_pkthdr *header = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
+    //    header->caplen = 62;
+    //    header->len = 62;
+    //    header->ts = *ts;
+    //
+    //    cout << GREEN << "[OK]" << RESET << " Vytvoreny header pre pcap s velkostou: " << header->caplen << endl << endl;
+    //
+    //    // this open and parse the XML file:
+    //    XMLNode xMainNode = XMLNode::openFileHelper(xml_name, "packets_summary");
+    //
+    //    cout << GREEN << "[OK]" << RESET << " Nacitany XML subor: " << xml_name << endl << endl;
+    //    
+    //    
+    //    int count_items = xMainNode.nChildNode();
+    //
+    //    for (int i = 0; i < count_items; i++) {
+    //        XMLNode node = xMainNode.getChildNode(i);
+    //        cout << YELLOW << "[Start]" << RESET << " Nacitavanie dat z XML" << endl;
+    //        
+    //        index = node.getChildNode("index").getText();
+    //        cout << GREEN << "[OK]" << RESET << " Nacitany index: " << index << endl;
+    //        
+    //        protocol = node.getChildNode("protocol").getText();
+    //        cout << GREEN << "[OK]" << RESET << " Nacitany protocol: " << protocol << endl;
+    //        
+    //        protocol_type = node.getChildNode("protocol_type").getText();
+    //        cout << GREEN << "[OK]" << RESET << " Nacitany protocol_type: " << protocol_type << endl;
+    //        
+    //        local_mac_address = node.getChildNode("local_mac_address").getText();
+    //        cout << GREEN << "[OK]" << RESET << " Nacitane local_mac_address: " << local_mac_address << endl;
+    //        
+    //        if (node.getChildNode("remote_mac_address").getText() != NULL) {
+    //            remote_mac_address = node.getChildNode("remote_mac_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_mac_address: " << remote_mac_address << endl;
+    //        } else {
+    //            remote_mac_address = set_broadcast_mac_address();
+    //            cout << GREEN << "[OK]" << RESET << " remote_mac_address je prazdna, nastavujem: " << remote_mac_address << endl;
+    //        }
+    //        
+    //        
+    //        frame_type = node.getChildNode("frame_type").getText();
+    //        cout << GREEN << "[OK]" << RESET << " Nacitany frame_type: " << frame_type << endl;
+    //
+    //        if (!protocol_type.compare(UDP) || !protocol_type.compare(TCP)) {
+    //            cout << YELLOW << "[UDP/TCP]" << RESET << " Specificke udaje pre UDP/TCP: " << endl;
+    //            version = node.getChildNode("version").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane version: " << version << endl;
+    //            
+    //            local_address = node.getChildNode("local_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_address: " << local_address << endl;
+    //            
+    //            remote_address = node.getChildNode("remote_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_address: " << remote_address << endl;
+    //            
+    //            local_port = node.getChildNode("local_port").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_port: " << local_port << endl;
+    //            
+    //            remote_port = node.getChildNode("remote_port").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_port: " << remote_port << endl;
+    //            
+    //            if (node.getChildNode("service_name").getText() != NULL) {
+    //                service_name = node.getChildNode("service_name").getText();
+    //            } else {
+    //                service_name = "";
+    //            }
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane service_name: " << service_name << endl;
+    //
+    //        } else if (!protocol_type.compare(PEP)) {
+    //            cout << YELLOW << "[PEP]" << RESET << " Specificke udaje pre (IPX) PEP: " << endl;
+    //            
+    //            local_net_address = node.getChildNode("local_net_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_net_address: " << local_net_address << endl;
+    //            
+    //            local_socket_address = node.getChildNode("local_socket_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_socket_address: " << local_socket_address << endl;
+    //            
+    //            remote_net_address = node.getChildNode("remote_net_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_net_address: " << remote_net_address << endl;
+    //            
+    //            remote_socket_address = node.getChildNode("remote_socket_address").getText();
+    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_socket_address: " << remote_socket_address << endl;
+    //        }
+    //        
+    //        cout << YELLOW << "[Done]" << RESET << " Nacitane udaje pre packet: " << protocol_type << endl;
+    //        
+    //        packets = node.getChildNode("packets").getText();
+    //        cout << GREEN << "[OK]" << RESET << " Pocet packetov pre " << protocol_type << " je " << packets << endl;
+    //
+    //        
+    //        int count_packets = str_to_int(packets, 10);
+    //
+    //        if (!protocol_type.compare(UDP)) {
+    //            u_char* udp_packet = setup_udp_packet(70,
+    //                    local_mac_address,
+    //                    remote_mac_address,
+    //                    protocol,
+    //                    local_address,
+    //                    remote_address,
+    //                    protocol_type,
+    //                    local_port,
+    //                    remote_port,
+    //                    service_name);
+    //
+    //            
+    //            
+    //            for (int i = 0; i < count_packets; i++) {
+    //                /* write packet to save file */
+    //                pcap_dump((u_char *) pcap_dump_ip, header, udp_packet);
+    //            }
+    //            cout << YELLOW << "[Create]" << RESET << " Zapisujem UDP packet: " << endl << endl << endl;
+    //        }
+    //        if (!protocol_type.compare(TCP)) {
+    //            u_char* tcp_packet = setup_tcp_packet(70,
+    //                    local_mac_address,
+    //                    remote_mac_address,
+    //                    version,
+    //                    local_address,
+    //                    remote_address,
+    //                    protocol_type,
+    //                    local_port,
+    //                    remote_port,
+    //                    service_name);
+    //
+    //            for (int i = 0; i < count_packets; i++) {
+    //                /* write packet to save file */
+    //                pcap_dump((u_char *) pcap_dump_ip, header, tcp_packet);
+    //            }
+    //            cout << YELLOW << "[Create]" << RESET << " Zapisujem TCP packet: " << endl << endl << endl;
+    //        }
+    //        if (!protocol_type.compare(PEP)) {
+    //            u_char* ipx_packet = setup_ipx_packet(70,
+    //                    local_mac_address,
+    //                    remote_mac_address,
+    //                    local_net_address,
+    //                    remote_net_address,
+    //                    local_socket_address,
+    //                    remote_socket_address);
+    //
+    //            for (int i = 0; i < count_packets; i++) {
+    //                /* write packet to save file */
+    //                pcap_dump((u_char *) pcap_dump_ip, header, ipx_packet);
+    //            }
+    //            cout << YELLOW << "[Create]" << RESET << " Zapisujem IPX PEP packet: " << endl << endl << endl;
+    //        }
+    //
+    //        index = "";
+    //        frame_type = "";
+    //        local_mac_address = "";
+    //        remote_mac_address = "";
+    //        protocol = "";
+    //        version = "";
+    //        local_address = "";
+    //        remote_address = "";
+    //        protocol_type = "";
+    //        local_port = "";
+    //        remote_port = "";
+    //        service_name = "";
+    //        service_name = "";
+    //        packets = "";
+    //        local_net_address = "";
+    //        local_socket_address = "";
+    //        remote_net_address = "";
+    //        remote_socket_address = "";
+    //    }
+    //
+    //    pcap_close(pcap_dead_ip);
+    //    pcap_dump_close(pcap_dump_ip);
+    //    cout << BLUE << "[Done] Vsetky packety boli zapisane do: " << pcap_name  << RESET << endl;
 
     return 0;
 }

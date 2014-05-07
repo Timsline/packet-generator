@@ -27,6 +27,7 @@
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>Makefile</itemPath>
     </logicalFolder>
+    <itemPath>change.xml</itemPath>
     <itemPath>packets.xml</itemPath>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
@@ -49,6 +50,8 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="change.xml" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="packets.xml" ex="false" tool="3" flavor2="0">
@@ -84,6 +87,8 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="change.xml" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="packets.xml" ex="false" tool="3" flavor2="0">
