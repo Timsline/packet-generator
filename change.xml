@@ -2,29 +2,33 @@
 <configure_summary> 
     <item> 
         <filter_parameters> 
-            <protocol>TCP</protocol> 
-            <local_address>147.175.106.158</local_address> 
-        </filter_parameters> 
-        <change_parameters> 
-            <remote_port>110</remote_port> 
-        </change_parameters> 
-    </item> 
-    <item> 
-        <filter_parameters> 
             <protocol>TCP</protocol>
-            <remote_address>93.184.69.3</remote_address> 
+            <local_address>147.175.106.158</local_address>
+            <remote_address>93.184.69.3</remote_address>
+            <local_port>4000</local_port>
+            <remote_port>21</remote_port>
         </filter_parameters> 
         <change_parameters> 
-            <remote_port>22</remote_port> 
+            <remote_port>150</remote_port>
+            <remote_address>8.8.8.8</remote_address> 
         </change_parameters> 
     </item>
     <item> 
         <filter_parameters> 
             <protocol>UDP</protocol> 
-            <local_address>147.175.106.158</local_address> 
+            <local_address>147.175.106.141</local_address> 
         </filter_parameters> 
         <change_parameters> 
-            <remote_port>110</remote_port> 
+            <remote_port>200</remote_port> 
+        </change_parameters> 
+    </item>
+    <item> 
+        <filter_parameters> 
+            <protocol>IPX</protocol> 
+            <local_net_address>30 09 80 00</local_net_address> 
+        </filter_parameters> 
+        <change_parameters> 
+            <remote_net_address>20 09 50 00</remote_net_address> 
         </change_parameters> 
     </item>
 </configure_summary>

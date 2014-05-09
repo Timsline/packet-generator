@@ -909,25 +909,34 @@ void create_packet_from_xml() {
 }
 
 void read_packet_from_xml() {
-    string index = "";
-    string frame_type = "";
     string local_mac_address = "";
     string remote_mac_address = "";
     string protocol = "";
-    string version = "";
     string local_address = "";
     string remote_address = "";
-    string protocol_type = "";
     string local_port = "";
     string remote_port = "";
-    string service_name = "";
-    string packets = "";
 
     //ipx
     string local_net_address;
     string local_socket_address;
     string remote_net_address;
     string remote_socket_address;
+
+    // change
+    string local_mac_address_ch = "";
+    string remote_mac_address_ch = "";
+    string local_address_ch = "";
+    string remote_address_ch = "";
+    string local_port_ch = "";
+    string remote_port_ch = "";
+    //ipx
+    string local_net_address_ch = "";
+    string local_socket_address_ch = "";
+    string remote_net_address_ch = "";
+    string remote_socket_address_ch = "";
+
+
 
     // read pcap file    
     pcap_t* opened_file;
@@ -960,8 +969,6 @@ void read_packet_from_xml() {
 
     int count_items = xMainNode.nChildNode();
 
-    int filter_parameters = 0;
-    int change_parameters = 0;
 
     // otvorenie suboru na citanie
     if ((opened_file = pcap_open_offline("packet.pcap", errbuf)) == NULL) {
@@ -978,33 +985,13 @@ void read_packet_from_xml() {
             array[numberOfRows][i] = data[i];
             //printf("%02X", tmp[i]);
         }
+        
         numberOfRows++;
     }
-
-    //    cout << "zac matrix" << endl;
-    //    
-    //    for (int r = 0; r < y; r++) {
-    //        for (int col = 0; col < 70; col++) {
-    //            printf("%02X", array[r][col]);
-    //        }
-    //    }
-    //    
-    //    cout << "cislo: " << y << endl;
-    //    
-    //    cout << "kon matrix" << endl;
-
 
     for (int i = 0; i < count_items; i++) {
         XMLNode node = xMainNode.getChildNode(i);
         cout << YELLOW << "[Start]" << RESET << " Nacitavanie dat z XML" << endl;
-
-
-        // filter parameters 
-        if (node.getChildNode("filter_parameters").getChildNode("frame_type").getText() != NULL) {
-            frame_type = node.getChildNode("filter_parameters").getChildNode("frame_type").getText();
-        } else {
-            cout << "Filter parameter frame_type nie je zadany" << endl;
-        }
 
         if (node.getChildNode("filter_parameters").getChildNode("local_mac_address").getText() != NULL) {
             local_mac_address = node.getChildNode("filter_parameters").getChildNode("local_mac_address").getText();
@@ -1022,12 +1009,6 @@ void read_packet_from_xml() {
             protocol = node.getChildNode("filter_parameters").getChildNode("protocol").getText();
         } else {
             cout << "Filter parameter protocol nie je zadany" << endl;
-        }
-
-        if (node.getChildNode("filter_parameters").getChildNode("protocol_type").getText() != NULL) {
-            local_port = node.getChildNode("filter_parameters").getChildNode("protocol_type").getText();
-        } else {
-            cout << "Filter parameter protocol_type nie je zadany" << endl;
         }
 
         if (node.getChildNode("filter_parameters").getChildNode("local_address").getText() != NULL) {
@@ -1054,87 +1035,243 @@ void read_packet_from_xml() {
         } else {
             cout << "Filter parameter remote_port nie je zadany" << endl;
         }
+        
+        // filter ipx
+        
+        if (node.getChildNode("filter_parameters").getChildNode("local_net_address").getText() != NULL) {
+            local_net_address = node.getChildNode("filter_parameters").getChildNode("local_net_address").getText();
+            cout << "Change rp: " << local_net_address << endl;
+        } else {
+            cout << "Change parameter local_net_address_ch nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("local_socket_address").getText() != NULL) {
+            local_socket_address = node.getChildNode("filter_parameters").getChildNode("local_socket_address").getText();
+            cout << "Change rp: " << local_socket_address << endl;
+        } else {
+            cout << "Change parameter local_socket_address_ch nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("remote_net_address").getText() != NULL) {
+            remote_net_address = node.getChildNode("filter_parameters").getChildNode("remote_net_address").getText();
+            cout << "Change rp: " << remote_net_address << endl;
+        } else {
+            cout << "Change parameter remote_net_address_ch nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("filter_parameters").getChildNode("remote_socket_address").getText() != NULL) {
+            remote_socket_address = node.getChildNode("filter_parameters").getChildNode("remote_socket_address").getText();
+            cout << "Change rp: " << remote_socket_address << endl;
+        } else {
+            cout << "Change parameter remote_net_address_ch nie je zadany" << endl;
+        }
 
 
 
         // change parameters
         if (node.getChildNode("change_parameters").getChildNode("local_mac_address").getText() != NULL) {
-            local_mac_address = node.getChildNode("change_parameters").getChildNode("local_mac_address").getText();
-            cout << local_mac_address << endl;
+            local_mac_address_ch = node.getChildNode("change_parameters").getChildNode("local_mac_address").getText();
+            cout << "Change lma: " << local_mac_address_ch << endl;
         } else {
             cout << "Change parameter local_mac_address nie je zadany" << endl;
         }
 
         if (node.getChildNode("change_parameters").getChildNode("remote_mac_address").getText() != NULL) {
-            remote_mac_address = node.getChildNode("change_parameters").getChildNode("remote_mac_address").getText();
-            cout << remote_mac_address << endl;
+            remote_mac_address_ch = node.getChildNode("change_parameters").getChildNode("remote_mac_address").getText();
+            cout << "Change rma: " << remote_mac_address_ch << endl;
         } else {
             cout << "Change parameter remote_mac_address nie je zadany" << endl;
         }
 
         if (node.getChildNode("change_parameters").getChildNode("local_address").getText() != NULL) {
-            local_address = node.getChildNode("change_parameters").getChildNode("local_address").getText();
-            cout << local_address << endl;
+            local_address_ch = node.getChildNode("change_parameters").getChildNode("local_address").getText();
+            cout << "Change la: " << local_address_ch << endl;
         } else {
             cout << "Change parameter local_address nie je zadany" << endl;
         }
 
         if (node.getChildNode("change_parameters").getChildNode("remote_address").getText() != NULL) {
-            remote_address = node.getChildNode("change_parameters").getChildNode("remote_address").getText();
-            cout << remote_address << endl;
+            remote_address_ch = node.getChildNode("change_parameters").getChildNode("remote_address").getText();
+            cout << "Change ra: " << remote_address_ch << endl;
         } else {
             cout << "Change parameter remote_address nie je zadany" << endl;
         }
 
         if (node.getChildNode("change_parameters").getChildNode("local_port").getText() != NULL) {
-            local_port = node.getChildNode("change_parameters").getChildNode("local_port").getText();
-            cout << local_port << endl;
+            local_port_ch = node.getChildNode("change_parameters").getChildNode("local_port").getText();
+            cout << "Change lp: " << local_port_ch << endl;
         } else {
             cout << "Change parameter local_port nie je zadany" << endl;
         }
 
         if (node.getChildNode("change_parameters").getChildNode("remote_port").getText() != NULL) {
-            remote_port = node.getChildNode("change_parameters").getChildNode("remote_port").getText();
-            cout << remote_port << endl;
+            remote_port_ch = node.getChildNode("change_parameters").getChildNode("remote_port").getText();
+            cout << "Change rp: " << remote_port_ch << endl;
         } else {
             cout << "Change parameter remote_port nie je zadany" << endl;
         }
 
+        // IPX change
 
-        // tu nacitam packety z pcap po jednom a kazdy nacitany paket hned porovnat s filtrom
-        // ak sa zhoduje tak ho hned zmenit a dump a citat dalsi
+        if (node.getChildNode("change_parameters").getChildNode("local_net_address").getText() != NULL) {
+            local_net_address_ch = node.getChildNode("change_parameters").getChildNode("local_net_address").getText();
+            cout << "Change rp: " << local_net_address_ch << endl;
+        } else {
+            cout << "Change parameter local_net_address_ch nie je zadany" << endl;
+        }
 
+        if (node.getChildNode("change_parameters").getChildNode("local_socket_address").getText() != NULL) {
+            local_socket_address_ch = node.getChildNode("change_parameters").getChildNode("local_socket_address").getText();
+            cout << "Change rp: " << local_socket_address_ch << endl;
+        } else {
+            cout << "Change parameter local_socket_address_ch nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("remote_net_address").getText() != NULL) {
+            remote_net_address_ch = node.getChildNode("change_parameters").getChildNode("remote_net_address").getText();
+            cout << "Change rp: " << remote_net_address_ch << endl;
+        } else {
+            cout << "Change parameter remote_net_address_ch nie je zadany" << endl;
+        }
+
+        if (node.getChildNode("change_parameters").getChildNode("remote_socket_address").getText() != NULL) {
+            remote_socket_address_ch = node.getChildNode("change_parameters").getChildNode("remote_socket_address").getText();
+            cout << "Change rp: " << remote_socket_address_ch << endl;
+        } else {
+            cout << "Change parameter remote_net_address_ch nie je zadany" << endl;
+        }
 
         //cout << "prot: " << protocol << endl;
         if (!protocol.compare("TCP")) {
             cout << "som tcp packet" << endl;
 
+
+            /*
+             *  frame_type
+             *  local_mac_address
+             *  remote_mac_address
+             *  protocol
+             *  protocol_type
+             *  local_address
+             *  remote_address
+             *  local_port
+             *  remote_port
+             */
+
             for (int r = 0; r < numberOfRows; r++) {
+                // ak je to tcp
                 if (array[r][23] == 0x06) {
-                    u_char* ip;
                     if (local_address.length() != 0) {
-                        ip = parse_ip_addr(local_address);
-
-
-
-
-
-                        if (array[r][26] == ip[0] && array[r][27] == ip[1] && array[r][28] == ip[2] && array[r][29] == ip[3]) {
-                            //                            printf("%03d.", array[r][26]);
-                            //                            printf("%03d.", array[r][27]);
-                            //                            printf("%03d.", array[r][28]);
-                            //                            printf("%03d.\n", array[r][29]);
-                            if (remote_port != "") {
-                                // change parameters
-                                string rp = dec_to_hexstr(remote_port);
-                                array[r][36] = str_to_int(rp.substr(0, 2));
-                                array[r][37] = str_to_int(rp.substr(2, 2));
-
-                            }
-
-
+                        u_char* la = parse_ip_addr(local_address);
+                        if (!(array[r][26] == la[0] && array[r][27] == la[1] && array[r][28] == la[2] && array[r][29] == la[3])) {
+                            continue;
                         }
                     }
+
+                    if (remote_address.length() != 0) {
+                        u_char* ra = parse_ip_addr(remote_address);
+                        if (!(array[r][30] == ra[0] && array[r][31] == ra[1] && array[r][32] == ra[2] && array[r][33] == ra[3])) {
+                            continue;
+                        }
+                    }
+
+                    if (remote_port.length() != 0) {
+
+                        string rp = dec_to_hexstr(remote_port);
+
+                        if (!(array[r][36] == str_to_int(rp.substr(0, 2)) && array[r][37] == str_to_int(rp.substr(2, 2)))) {
+                            continue;
+                        }
+                    }
+
+                    if (local_port.length() != 0) {
+
+                        string lp = dec_to_hexstr(local_port);
+
+                        if (!(array[r][34] == str_to_int(lp.substr(0, 2)) && array[r][35] == str_to_int(lp.substr(2, 2)))) {
+                            continue;
+                        }
+                    }
+
+                    if (local_mac_address.length() != 0) {
+
+                        string lmc = parse_mac_address(local_mac_address);
+
+                        int j = 0;
+                        for (int i = 6; i <= 11; i++) {
+                            if (!(array[r][i] == str_to_int(lmc.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_mac_address.length() != 0) {
+
+                        string rmc = parse_mac_address(remote_mac_address);
+
+                        int j = 0;
+                        for (int i = 0; i <= 5; i++) {
+                            if (!(array[r][i] == str_to_int(rmc.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+
+                    // change parameters
+                    /*
+                     * local_mac_address
+                     * remote_mac_address
+                     * local_address
+                     * remote_address
+                     * local_port
+                     * remote_port
+                     */
+                    if (remote_port_ch != "") {
+                        string rp = dec_to_hexstr(remote_port_ch);
+                        array[r][36] = str_to_int(rp.substr(0, 2));
+                        array[r][37] = str_to_int(rp.substr(2, 2));
+                    }
+                    if (local_port_ch != "") {
+                        string lp = dec_to_hexstr(local_port_ch);
+                        array[r][34] = str_to_int(lp.substr(0, 2));
+                        array[r][35] = str_to_int(lp.substr(2, 2));
+                    }
+
+                    if (local_mac_address_ch != "") {
+                        string lma = parse_mac_address(local_mac_address_ch);
+                        int j = 0;
+                        for (int i = 6; i <= 11; i++) {
+                            array[r][i] = str_to_int(lma.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_mac_address_ch != "") {
+                        string rma = parse_mac_address(remote_mac_address_ch);
+                        int j = 0;
+                        for (int i = 0; i <= 5; i++) {
+                            array[r][i] = str_to_int(rma.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (local_address_ch != "") {
+                        u_char* la = parse_ip_addr(local_address_ch);
+                        for (int i = 26; i <= 29; i++) {
+                            array[r][i] = la[i - 26];
+                        }
+                    }
+
+                    if (remote_address_ch != "") {
+                        u_char* ra = parse_ip_addr(remote_address_ch);
+                        for (int i = 30; i <= 33; i++) {
+                            array[r][i] = ra[i - 30];
+                        }
+                    }
+
                 }
             }
 
@@ -1143,25 +1280,307 @@ void read_packet_from_xml() {
 
 
             for (int r = 0; r < numberOfRows; r++) {
+                // ak je to udp
                 if (array[r][23] == 0x11) {
 
-                    u_char* ip;
                     if (local_address.length() != 0) {
-                        ip = parse_ip_addr(local_address);
-
-                        if (array[r][26] == ip[0] && array[r][27] == ip[1] && array[r][28] == ip[2] && array[r][29] == ip[3]) {
-
-                            printf("%03d.", array[r][26]);
-                            printf("%03d.", array[r][27]);
-                            printf("%03d.", array[r][28]);
-                            printf("%03d\n", array[r][29]);
+                        u_char* la = parse_ip_addr(local_address);
+                        if (!(array[r][26] == la[0] && array[r][27] == la[1] && array[r][28] == la[2] && array[r][29] == la[3])) {
+                            continue;
                         }
                     }
+
+                    if (remote_address.length() != 0) {
+                        u_char* ra = parse_ip_addr(remote_address);
+                        if (!(array[r][30] == ra[0] && array[r][31] == ra[1] && array[r][32] == ra[2] && array[r][33] == ra[3])) {
+                            continue;
+                        }
+                    }
+
+                    if (remote_port.length() != 0) {
+
+                        string rp = dec_to_hexstr(remote_port);
+
+                        if (!(array[r][36] == str_to_int(rp.substr(0, 2)) && array[r][37] == str_to_int(rp.substr(2, 2)))) {
+                            continue;
+                        }
+                    }
+
+                    if (local_port.length() != 0) {
+
+                        string lp = dec_to_hexstr(local_port);
+
+                        if (!(array[r][34] == str_to_int(lp.substr(0, 2)) && array[r][35] == str_to_int(lp.substr(2, 2)))) {
+                            continue;
+                        }
+                    }
+
+                    if (local_mac_address.length() != 0) {
+
+                        string lmc = parse_mac_address(local_mac_address);
+
+                        int j = 0;
+                        for (int i = 6; i <= 11; i++) {
+                            if (!(array[r][i] == str_to_int(lmc.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_mac_address.length() != 0) {
+
+                        string rmc = parse_mac_address(remote_mac_address);
+
+                        int j = 0;
+                        for (int i = 0; i <= 5; i++) {
+                            if (!(array[r][i] == str_to_int(rmc.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+
+                    // change parameters
+                    /*
+                     * local_mac_address
+                     * remote_mac_address
+                     * local_address
+                     * remote_address
+                     * local_port
+                     * remote_port
+                     */
+                    if (remote_port_ch != "") {
+                        string rp = dec_to_hexstr(remote_port_ch);
+                        array[r][36] = str_to_int(rp.substr(0, 2));
+                        array[r][37] = str_to_int(rp.substr(2, 2));
+                    }
+                    if (local_port_ch != "") {
+                        string lp = dec_to_hexstr(local_port_ch);
+                        array[r][34] = str_to_int(lp.substr(0, 2));
+                        array[r][35] = str_to_int(lp.substr(2, 2));
+                    }
+
+                    if (local_mac_address_ch != "") {
+                        string lma = parse_mac_address(local_mac_address_ch);
+                        int j = 0;
+                        for (int i = 6; i <= 11; i++) {
+                            array[r][i] = str_to_int(lma.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_mac_address_ch != "") {
+                        string rma = parse_mac_address(remote_mac_address_ch);
+                        int j = 0;
+                        for (int i = 0; i <= 5; i++) {
+                            array[r][i] = str_to_int(rma.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (local_address_ch != "") {
+                        u_char* la = parse_ip_addr(local_address_ch);
+                        for (int i = 26; i <= 29; i++) {
+                            array[r][i] = la[i - 26];
+                        }
+                    }
+
+                    if (remote_address_ch != "") {
+                        u_char* ra = parse_ip_addr(remote_address_ch);
+                        for (int i = 30; i <= 33; i++) {
+                            array[r][i] = ra[i - 30];
+                        }
+                    }
+
+                }
+            }
+        } else if (!protocol.compare("IPX")) {
+            cout << "som IPX packet" << endl;
+            
+            /*
+                local_mac_address
+                remote_mac_address
+                local_net_address
+                local_socket_address
+                remote_net_address
+                remote_socket_address
+             */
+
+            for (int r = 0; r < numberOfRows; r++) {
+                // ak je to udp
+                if (array[r][14] == 0xFF && array[r][15] == 0xFF) {
+                    
+                   
+                    // filter parameters
+
+                    if (local_mac_address.length() != 0) {
+
+                        string lmc = parse_mac_address(local_mac_address);
+
+                        int j = 0;
+                        for (int i = 6; i <= 11; i++) {
+                            if (!(array[r][i] == str_to_int(lmc.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_mac_address.length() != 0) {
+
+                        string rmc = parse_mac_address(remote_mac_address);
+
+                        int j = 0;
+                        for (int i = 0; i <= 5; i++) {
+                            if (!(array[r][i] == str_to_int(rmc.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (local_net_address.length() != 0) {
+                        string lna = parse_ipx_items(local_net_address);
+                        int j = 0;
+                        for (int i = 32; i <= 35; i++) {
+                            if (!(array[r][i] == str_to_int(lna.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_net_address.length() != 0) {
+                        string rna = parse_ipx_items(remote_net_address);
+                        int j = 0;
+                        for (int i = 20; i <= 23; i++) {
+                            if (!(array[r][i] == str_to_int(rna.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_socket_address.length() != 0) {
+                        string rsa = parse_ipx_items(remote_socket_address);
+                        int j = 0;
+                        for (int i = 30; i <= 31; i++) {
+                            if (!(array[r][i] == str_to_int(rsa.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    if (local_socket_address.length() != 0) {
+                        string lsa = parse_ipx_items(local_socket_address);
+                        int j = 0;
+                        for (int i = 42; i <= 43; i++) {
+                            if (!(array[r][i] == str_to_int(lsa.substr(j, 2)))) {
+                                continue;
+                            }
+                            j += 2;
+                        }
+                    }
+
+                    // change
+                    if (local_mac_address_ch != "") {
+                        string lma = parse_mac_address(local_mac_address_ch);
+                        int j = 0;
+                        for (int i = 6; i <= 11; i++) {
+                            array[r][i] = str_to_int(lma.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_mac_address_ch != "") {
+                        string rma = parse_mac_address(remote_mac_address_ch);
+                        int j = 0;
+                        for (int i = 0; i <= 5; i++) {
+                            array[r][i] = str_to_int(rma.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (local_net_address_ch != "") {
+                        string lna = parse_ipx_items(local_net_address_ch);
+                        int j = 0;
+                        for (int i = 32; i <= 35; i++) {
+                            array[r][i] == str_to_int(lna.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_net_address_ch != "") {
+                        string rna = parse_ipx_items(remote_net_address_ch);
+                        int j = 0;
+                        for (int i = 20; i <= 23; i++) {
+                            array[r][i] == str_to_int(rna.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+                    if (remote_socket_address_ch != "") {
+                        string rsa = parse_ipx_items(remote_socket_address_ch);
+                        cout << "rsa " << rsa << endl;
+//                        int j = 0;
+//                        for (int i = 30; i <= 31; i++) {
+//                            array[r][i] == str_to_int(rsa.substr(j, 2));
+//                            j += 2;
+//                            printf("%02X\n", array[r][i]);
+//                        }
+                        cout << "rows: " << r << endl;
+                        array[r][30] == 0x55;
+                        array[r][31] == 0x66;
+//                        printf("%02X = %02X\n", array[r][30], array[r][31]);
+                    }
+
+                    if (local_socket_address_ch != "") {
+                        string lsa = parse_ipx_items(local_socket_address_ch);
+                        int j = 0;
+                        for (int i = 42; i <= 43; i++) {
+                            array[r][i] == str_to_int(lsa.substr(j, 2));
+                            j += 2;
+                        }
+                    }
+
+
                 }
             }
         }
 
-        // create new pcap
+        
+        local_mac_address = "";
+        remote_mac_address = "";
+        protocol = "";
+        local_address = "";
+        remote_address = "";
+        local_port = "";
+        remote_port = "";
+        
+        local_mac_address_ch = "";
+        remote_mac_address_ch = "";
+        local_address_ch = "";
+        remote_address_ch = "";
+        local_port_ch = "";
+        remote_port_ch = "";
+        
+        
+        local_net_address = "";
+        local_socket_address = "";
+        remote_net_address = "";
+        remote_socket_address = "";
+        
+        local_net_address_ch = "";
+        local_socket_address_ch = "";
+        remote_net_address_ch = "";
+        remote_socket_address_ch = "";
+
+    }
+    
+            // create new pcap
 
 
         pcap_dead_ip = pcap_open_dead(DLT_EN10MB, 65535);
@@ -1185,59 +1604,12 @@ void read_packet_from_xml() {
             pcap_dump((u_char *) pcap_dump_ip, header, array[i]);
             // ma velkost array[20][70]
         }
-
-
-
-
-
-
-
-        index = "";
-        frame_type = "";
-        local_mac_address = "";
-        remote_mac_address = "";
-        protocol = "";
-        version = "";
-        local_address = "";
-        remote_address = "";
-        protocol_type = "";
-        local_port = "";
-        remote_port = "";
-        service_name = "";
-        service_name = "";
-        packets = "";
-        local_net_address = "";
-        local_socket_address = "";
-        remote_net_address = "";
-        remote_socket_address = "";
-
-    }
+    
     pcap_close(pcap_dead_ip);
     pcap_dump_close(pcap_dump_ip);
 }
 
 int main(int argc, char **argv) {
-    // tcp/udp
-    string index;
-    string frame_type;
-    string local_mac_address;
-    string remote_mac_address;
-    string protocol;
-    string version;
-    string local_address;
-    string remote_address;
-    string protocol_type;
-    string local_port;
-    string remote_port;
-    string service_name;
-    string packets;
-
-    //ipx
-    string local_net_address;
-    string local_socket_address;
-    string remote_net_address;
-    string remote_socket_address;
-
     // info o programe
     info_program();
 
@@ -1308,220 +1680,6 @@ int main(int argc, char **argv) {
         }
 
     } while (choice != 3);
-
-    //    // read pcap file    
-    //    pcap_t* opened_file; 
-    //    char errbuf[PCAP_ERRBUF_SIZE];
-    //    
-    //    
-    //    opened_file = pcap_open_offline(pcap_name, errbuf);
-    //    
-    //    
-    //    const u_char* data;
-    //    pcap_t* r_d;
-    //    
-    //    timeval *ts_h = (timeval*) malloc(sizeof (timeval));
-    //    ts_h->tv_sec = time(NULL);
-    //    ts_h->tv_usec = 0;
-    //
-    //    //creation of header
-    //    pcap_pkthdr *r_h = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
-    //    r_h->caplen = 62;
-    //    r_h->len = 62;
-    //    r_h->ts = *ts_h;
-    //    
-    //    data = pcap_next(opened_file, r_h);
-    //    
-    //    cout << data[1] << endl;
-    //
-    //    return 0;
-    //        
-    //        
-    //    // end of reading    
-
-    //    pcap_t *pcap_dead_ip;
-    //    pcap_dumper_t *pcap_dump_ip;
-    //
-    //    pcap_dead_ip = pcap_open_dead(DLT_EN10MB, 65535);
-    //
-    //    // create the output file
-    //    pcap_dump_ip = pcap_dump_open(pcap_dead_ip, pcap_name);
-    //
-    //    cout << GREEN << "[OK]" << RESET << " Vytvoreny vystupny subor pre wireshark: " << pcap_name << endl << endl;
-    //    
-    //    timeval *ts = (timeval*) malloc(sizeof (timeval));
-    //    ts->tv_sec = time(NULL);
-    //    ts->tv_usec = 0;
-    //
-    //    //creation of header
-    //    pcap_pkthdr *header = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
-    //    header->caplen = 62;
-    //    header->len = 62;
-    //    header->ts = *ts;
-    //
-    //    cout << GREEN << "[OK]" << RESET << " Vytvoreny header pre pcap s velkostou: " << header->caplen << endl << endl;
-    //
-    //    // this open and parse the XML file:
-    //    XMLNode xMainNode = XMLNode::openFileHelper(xml_name, "packets_summary");
-    //
-    //    cout << GREEN << "[OK]" << RESET << " Nacitany XML subor: " << xml_name << endl << endl;
-    //    
-    //    
-    //    int count_items = xMainNode.nChildNode();
-    //
-    //    for (int i = 0; i < count_items; i++) {
-    //        XMLNode node = xMainNode.getChildNode(i);
-    //        cout << YELLOW << "[Start]" << RESET << " Nacitavanie dat z XML" << endl;
-    //        
-    //        index = node.getChildNode("index").getText();
-    //        cout << GREEN << "[OK]" << RESET << " Nacitany index: " << index << endl;
-    //        
-    //        protocol = node.getChildNode("protocol").getText();
-    //        cout << GREEN << "[OK]" << RESET << " Nacitany protocol: " << protocol << endl;
-    //        
-    //        protocol_type = node.getChildNode("protocol_type").getText();
-    //        cout << GREEN << "[OK]" << RESET << " Nacitany protocol_type: " << protocol_type << endl;
-    //        
-    //        local_mac_address = node.getChildNode("local_mac_address").getText();
-    //        cout << GREEN << "[OK]" << RESET << " Nacitane local_mac_address: " << local_mac_address << endl;
-    //        
-    //        if (node.getChildNode("remote_mac_address").getText() != NULL) {
-    //            remote_mac_address = node.getChildNode("remote_mac_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_mac_address: " << remote_mac_address << endl;
-    //        } else {
-    //            remote_mac_address = set_broadcast_mac_address();
-    //            cout << GREEN << "[OK]" << RESET << " remote_mac_address je prazdna, nastavujem: " << remote_mac_address << endl;
-    //        }
-    //        
-    //        
-    //        frame_type = node.getChildNode("frame_type").getText();
-    //        cout << GREEN << "[OK]" << RESET << " Nacitany frame_type: " << frame_type << endl;
-    //
-    //        if (!protocol_type.compare(UDP) || !protocol_type.compare(TCP)) {
-    //            cout << YELLOW << "[UDP/TCP]" << RESET << " Specificke udaje pre UDP/TCP: " << endl;
-    //            version = node.getChildNode("version").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane version: " << version << endl;
-    //            
-    //            local_address = node.getChildNode("local_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_address: " << local_address << endl;
-    //            
-    //            remote_address = node.getChildNode("remote_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_address: " << remote_address << endl;
-    //            
-    //            local_port = node.getChildNode("local_port").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_port: " << local_port << endl;
-    //            
-    //            remote_port = node.getChildNode("remote_port").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_port: " << remote_port << endl;
-    //            
-    //            if (node.getChildNode("service_name").getText() != NULL) {
-    //                service_name = node.getChildNode("service_name").getText();
-    //            } else {
-    //                service_name = "";
-    //            }
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane service_name: " << service_name << endl;
-    //
-    //        } else if (!protocol_type.compare(PEP)) {
-    //            cout << YELLOW << "[PEP]" << RESET << " Specificke udaje pre (IPX) PEP: " << endl;
-    //            
-    //            local_net_address = node.getChildNode("local_net_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_net_address: " << local_net_address << endl;
-    //            
-    //            local_socket_address = node.getChildNode("local_socket_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane local_socket_address: " << local_socket_address << endl;
-    //            
-    //            remote_net_address = node.getChildNode("remote_net_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_net_address: " << remote_net_address << endl;
-    //            
-    //            remote_socket_address = node.getChildNode("remote_socket_address").getText();
-    //            cout << GREEN << "[OK]" << RESET << " Nacitane remote_socket_address: " << remote_socket_address << endl;
-    //        }
-    //        
-    //        cout << YELLOW << "[Done]" << RESET << " Nacitane udaje pre packet: " << protocol_type << endl;
-    //        
-    //        packets = node.getChildNode("packets").getText();
-    //        cout << GREEN << "[OK]" << RESET << " Pocet packetov pre " << protocol_type << " je " << packets << endl;
-    //
-    //        
-    //        int count_packets = str_to_int(packets, 10);
-    //
-    //        if (!protocol_type.compare(UDP)) {
-    //            u_char* udp_packet = setup_udp_packet(70,
-    //                    local_mac_address,
-    //                    remote_mac_address,
-    //                    protocol,
-    //                    local_address,
-    //                    remote_address,
-    //                    protocol_type,
-    //                    local_port,
-    //                    remote_port,
-    //                    service_name);
-    //
-    //            
-    //            
-    //            for (int i = 0; i < count_packets; i++) {
-    //                /* write packet to save file */
-    //                pcap_dump((u_char *) pcap_dump_ip, header, udp_packet);
-    //            }
-    //            cout << YELLOW << "[Create]" << RESET << " Zapisujem UDP packet: " << endl << endl << endl;
-    //        }
-    //        if (!protocol_type.compare(TCP)) {
-    //            u_char* tcp_packet = setup_tcp_packet(70,
-    //                    local_mac_address,
-    //                    remote_mac_address,
-    //                    version,
-    //                    local_address,
-    //                    remote_address,
-    //                    protocol_type,
-    //                    local_port,
-    //                    remote_port,
-    //                    service_name);
-    //
-    //            for (int i = 0; i < count_packets; i++) {
-    //                /* write packet to save file */
-    //                pcap_dump((u_char *) pcap_dump_ip, header, tcp_packet);
-    //            }
-    //            cout << YELLOW << "[Create]" << RESET << " Zapisujem TCP packet: " << endl << endl << endl;
-    //        }
-    //        if (!protocol_type.compare(PEP)) {
-    //            u_char* ipx_packet = setup_ipx_packet(70,
-    //                    local_mac_address,
-    //                    remote_mac_address,
-    //                    local_net_address,
-    //                    remote_net_address,
-    //                    local_socket_address,
-    //                    remote_socket_address);
-    //
-    //            for (int i = 0; i < count_packets; i++) {
-    //                /* write packet to save file */
-    //                pcap_dump((u_char *) pcap_dump_ip, header, ipx_packet);
-    //            }
-    //            cout << YELLOW << "[Create]" << RESET << " Zapisujem IPX PEP packet: " << endl << endl << endl;
-    //        }
-    //
-    //        index = "";
-    //        frame_type = "";
-    //        local_mac_address = "";
-    //        remote_mac_address = "";
-    //        protocol = "";
-    //        version = "";
-    //        local_address = "";
-    //        remote_address = "";
-    //        protocol_type = "";
-    //        local_port = "";
-    //        remote_port = "";
-    //        service_name = "";
-    //        service_name = "";
-    //        packets = "";
-    //        local_net_address = "";
-    //        local_socket_address = "";
-    //        remote_net_address = "";
-    //        remote_socket_address = "";
-    //    }
-    //
-    //    pcap_close(pcap_dead_ip);
-    //    pcap_dump_close(pcap_dump_ip);
-    //    cout << BLUE << "[Done] Vsetky packety boli zapisane do: " << pcap_name  << RESET << endl;
 
     return 0;
 }
