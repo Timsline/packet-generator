@@ -635,6 +635,581 @@ u_char* setup_tcp_packet(int size_of_packet,
     return packet;
 }
 
+u_char* setup_ike_packet(int size_of_packet,
+        string local_mac_address,
+        string remote_mac_address,
+        string version_ike,
+        string exchange_type,
+        string local_address,
+        string remote_address,
+        string local_port,
+        string remote_port) {
+    u_char* packet;
+    packet = (u_char*) malloc(size_of_packet);
+
+
+    // set destination MAC
+    string remote_mac_address_new = parse_mac_address(remote_mac_address);
+    int j = 0;
+
+    for (int i = 0; i <= 5; i++) {
+        packet[i] = str_to_int(remote_mac_address_new.substr(j, 2));
+        j += 2;
+    }
+
+    // set source MAC
+    j = 0;
+    string local_mac_address_new = parse_mac_address(local_mac_address);
+    for (int i = 6; i <= 11; i++) {
+        packet[i] = str_to_int(local_mac_address_new.substr(j, 2));
+        j += 2;
+    }
+
+    // set IP protocol 0x0800
+    packet[12] = 0x08;
+    packet[13] = 0x00;
+
+    // IPv4 = 0x45
+    packet[14] = IPv4;
+
+    // diff services field
+    packet[15] = 0x00;
+
+    // length IP
+    packet[16] = 0x01;
+    packet[17] = 0x10; // 272 bytes
+
+    // identification
+    packet[18] = 0x00;
+    packet[19] = 0x01;
+
+    // flags
+    packet[20] = 0x00;
+
+    // fragment offset
+    packet[21] = 0x00;
+
+    // Time To Live - TTL  64
+    packet[22] = 0x40;
+
+    // protocol UDP - IKE je pri UDP
+    packet[23] = 0x11;
+
+    // IP header checksum
+    packet[24] = 0x00;
+    packet[25] = 0x00;
+
+    // IP source address
+    u_char* ipcko_local = parse_ip_addr("127.0.0.1");
+
+    for (int i = 26; i <= 29; i++) {
+        packet[i] = ipcko_local[i - 26];
+    }
+
+    // IP destination address
+    u_char* ipcko_remote = parse_ip_addr("127.0.0.1");
+
+    for (int i = 30; i <= 33; i++) {
+        packet[i] = ipcko_remote[i - 30];
+    }
+
+    // check sum 
+    uint32_t sum_ip = 0;
+    uint16_t word_ip;
+
+    for (int i = 14; i <= 33; i += 2) {
+        word_ip = ((packet[i] << 8) & 0xff00) + (packet[i + 1] & 0xff);
+        sum_ip += (uint32_t) word_ip;
+    }
+
+    while (sum_ip >> 16)
+        sum_ip = (sum_ip & 0xffff) + (sum_ip >> 16);
+
+    sum_ip = ~sum_ip;
+
+    packet[24] = (sum_ip & 0xff00) >> 8;
+    packet[25] = sum_ip & 0xff;
+
+    cout << GREEN << "[OK]" << RESET << " Vypocitany checksum pre IP hlavicku UDP" << endl;
+
+    // UDP information
+    // udp source port
+    string local_port_new = dec_to_hexstr(local_port); // 44 5c
+    packet[34] = str_to_int(local_port_new.substr(0, 2)); // D8E6
+    packet[35] = str_to_int(local_port_new.substr(2, 2));
+
+
+
+    string remote_port_new = dec_to_hexstr(remote_port);
+    // udp destination port
+    packet[36] = str_to_int(remote_port_new.substr(0, 2)); // 35
+    packet[37] = str_to_int(remote_port_new.substr(2, 2));
+
+    // udp length
+    packet[38] = 0x00;
+    packet[39] = 0xfc; // 252 bytes
+
+    // check sum
+    packet[40] = 0x00;
+    packet[41] = 0x00;
+
+
+    // start of IKE (ISAKMP)
+
+    //    // initiator cookie
+    //    packet[42] = 0xdd;
+    //    packet[43] = 0xe8;
+    //    packet[44] = 0x90;
+    //    packet[45] = 0xdb;
+    //    packet[46] = 0x1f;
+    //    packet[47] = 0x62;
+    //    packet[48] = 0xef;
+    //    packet[49] = 0x70;
+    //
+    //    // responder cookie
+    //    for (int i = 0; i < 8; i++) {
+    //        packet[i + 50] = 0x00;
+    //    }
+    //
+    //    // next payload
+    //    packet[58] = 0x21; // security association dec 33
+    //
+    //    // version
+    //    packet[59] = 0x20;
+    //
+    //    // exchange type
+    //    packet[60] = 0x22; // IKE_SA_INIT dec 34
+    //
+    //    // flags
+    //    packet[61] = 0x08;
+    //
+    //    // message ID
+    //    for (int i = 0; i < 4; i++) {
+    //        packet[i + 62] = 0x00;
+    //    }
+    //
+    //    // length 244
+    //    packet[66] = 0x00;
+    //    packet[67] = 0x00;
+    //    packet[68] = 0x00;
+    //    packet[69] = 0xf4;
+    //
+    //    // type payload: security association
+    //
+    //    // next payload
+    //    packet[70] = 0x22; // key exchange dec 34
+    //
+    //    // critical bit
+    //    packet[71] = 0x00;
+    //
+    //    // payload length 44
+    //    packet[72] = 0x00;
+    //    packet[73] = 0x2c;
+    //
+    //    packet[74] = 0x00;
+    //
+    //    // type payload: proposal (2) #1
+    //
+    //    // next payload: NONE / No next payload
+    //    packet[75] = 0x00;
+    //
+    //    // critical bit
+    //    packet[76] = 0x00;
+    //
+    //    // payload length 40
+    //    packet[77] = 0x00;
+    //    packet[78] = 0x28;
+    //
+    //    // proposal number 1
+    //    packet[79] = 0x01;
+    //
+    //    // protocol ID: IKE 1
+    //    packet[80] = 0x01;
+    //
+    //    // SPI size 0
+    //    packet[81] = 0x00;
+    //
+    //    // proposal transforms
+    //    packet[82] = 0x04;
+    //
+    //    // type payload: transform
+    //
+    //    // next payload: transform
+    //    packet[83] = 0x03;
+    //
+    //    // critical bit
+    //    packet[84] = 0x00;
+    //
+    //    // payload length
+    //    packet[85] = 0x00;
+    //    packet[86] = 0x08;
+    //
+    //    // transform type: encryption algorithm (ENCR)
+    //    packet[87] = 0x01;
+    //
+    //    packet[88] = 0x00;
+    //
+    //    // transform ID: (ENCR) ENCR_3DES
+    //    packet[89] = 0x00;
+    //    packet[90] = 0x03;
+    //
+    //    // type payload transform
+    //
+    //    // next payload: transform
+    //    packet[91] = 0x03;
+    //
+    //    // critical bit
+    //    packet[92] = 0x00;
+    //
+    //    // payload length
+    //    packet[93] = 0x00;
+    //    packet[94] = 0x08;
+    //
+    //    // Transform Type: Pseudo-random Function (PRF) (2)
+    //    packet[95] = 0x02;
+    //
+    //    packet[96] = 0x00;
+    //
+    //    // Transform ID (PRF): PRF_HMAC_MD5 (1)
+    //    packet[97] = 0x00;
+    //    packet[98] = 0x01;
+    //    
+    //        // next payload: transform
+    //    packet[99] = 0x03;
+    //
+    //    // critical bit
+    //    packet[100] = 0x00;
+    //
+    //    // payload length
+    //    packet[101] = 0x00;
+    //    packet[102] = 0x08;
+    //
+    //    // Transform Type: Integrity Algorithm (INTEG) (3)
+    //    packet[103] = 0x03;
+    //
+    //    packet[104] = 0x00;
+    //
+    //    // Transform ID (INTEG): AUTH_HMAC_MD5_96 (1)
+    //    packet[105] = 0x00;
+    //    packet[106] = 0x01;
+    //    
+    //    
+    //    packet[107] = 0x00;
+    //    packet[108] = 0x00;
+    //    packet[109] = 0x00;
+    //    
+    //    packet[107] = 0x08;
+    //    packet[108] = 0x04;
+    //    packet[109] = 0x00;
+    //    packet[110] = 0x00;
+    //    packet[111] = 0x02;
+    //    
+    //    packet[112] = 0x28;
+    //    packet[113] = 0x00;
+    //    packet[114] = 0x00;
+    //    packet[115] = 0x88;
+    //    packet[116] = 0x00;
+    //    packet[117] = 0x02;
+    //    
+    //    for 
+
+    //    packet[0] = 0x00;
+    //packet[1] = 0x01;
+    //packet[2] = 0x01;
+    //packet[3] = 0x00;
+    //packet[4] = 0x00;
+    //packet[5] = 0x02;
+    //packet[6] = 0x00;
+    //packet[7] = 0x01;
+    //packet[8] = 0x01;
+    //packet[9] = 0x00;
+    //packet[10] = 0x00;
+    //packet[11] = 0x01;
+    //packet[12] = 0x08;
+    //packet[13] = 0x00;
+    //packet[14] = 0x45;
+    //packet[15] = 0x00;
+    //packet[16] = 0x01;
+    //packet[17] = 0x10;
+    //packet[18] = 0x00;
+    //packet[19] = 0x01;
+    //packet[20] = 0x00;
+    //packet[21] = 0x00;
+    //packet[22] = 0x40;
+    //packet[23] = 0x11;
+    //packet[24] = 0x7b;
+    //packet[25] = 0xda;
+    //packet[26] = 0x7f;
+    //packet[27] = 0x00;
+    //packet[28] = 0x00;
+    //packet[29] = 0x01;
+    //packet[30] = 0x7f;
+    //packet[31] = 0x00;
+    //packet[32] = 0x00;
+    //packet[33] = 0x01;
+    //packet[34] = 0x01;
+    //packet[35] = 0xf4;
+    //packet[36] = 0x01;
+    //packet[37] = 0xf4;
+    //packet[38] = 0x00;
+    //packet[39] = 0xfc;
+    //packet[40] = 0x3d;
+    //packet[41] = 0x64;
+    packet[42] = 0xdd;
+    packet[43] = 0xe8;
+    packet[44] = 0x90;
+    packet[45] = 0xdb;
+    packet[46] = 0x1f;
+    packet[47] = 0x62;
+    packet[48] = 0xef;
+    packet[49] = 0x70;
+    packet[50] = 0x00;
+    packet[51] = 0x00;
+    packet[52] = 0x00;
+    packet[53] = 0x00;
+    packet[54] = 0x00;
+    packet[55] = 0x00;
+    packet[56] = 0x00;
+    packet[57] = 0x00;
+    packet[58] = 0x21;
+
+    // IKE version 20 - 2 major 0 minor
+    packet[59] = str_to_int(version_ike);
+
+    // exchange type
+    packet[60] = str_to_int(dec_to_hexstr(exchange_type));
+
+
+    packet[61] = 0x08;
+    packet[62] = 0x00;
+    packet[63] = 0x00;
+    packet[64] = 0x00;
+    packet[65] = 0x00;
+    packet[66] = 0x00;
+    packet[67] = 0x00;
+    packet[68] = 0x00;
+    packet[69] = 0xf4;
+    //packet[70] = 0x22;
+    //packet[71] = 0x00;
+    //packet[72] = 0x00;
+    //packet[73] = 0x2c;
+    //packet[74] = 0x00;
+    //packet[75] = 0x00;
+    //packet[76] = 0x00;
+    //packet[77] = 0x28;
+    //packet[78] = 0x01;
+    //packet[79] = 0x01;
+    //packet[80] = 0x00;
+    //packet[81] = 0x04;
+    //packet[82] = 0x03;
+    //packet[83] = 0x00;
+    //packet[84] = 0x00;
+    //packet[85] = 0x08;
+    //packet[86] = 0x01;
+    //packet[87] = 0x00;
+    //packet[88] = 0x00;
+    //packet[89] = 0x03;
+    //packet[90] = 0x03;
+    //packet[91] = 0x00;
+    //packet[92] = 0x00;
+    //packet[93] = 0x08;
+    //packet[94] = 0x02;
+    //packet[95] = 0x00;
+    //packet[96] = 0x00;
+    //packet[97] = 0x01;
+    //packet[98] = 0x03;
+    //packet[99] = 0x00;
+    //packet[100] = 0x00;
+    //packet[101] = 0x08;
+    //packet[102] = 0x03;
+    //packet[103] = 0x00;
+    //packet[104] = 0x00;
+    //packet[105] = 0x01;
+    //packet[106] = 0x00;
+    //packet[107] = 0x00;
+    //packet[108] = 0x00;
+    //packet[109] = 0x08;
+    //packet[110] = 0x04;
+    //packet[111] = 0x00;
+    //packet[112] = 0x00;
+    //packet[113] = 0x02;
+    //packet[114] = 0x28;
+    //packet[115] = 0x00;
+    //packet[116] = 0x00;
+    //packet[117] = 0x88;
+    //packet[118] = 0x00;
+    //packet[119] = 0x02;
+    //packet[120] = 0x00;
+    //packet[121] = 0x00;
+    //packet[122] = 0x00;
+    //packet[123] = 0x00;
+    //packet[124] = 0x00;
+    //packet[125] = 0x00;
+    //packet[126] = 0x00;
+    //packet[127] = 0x00;
+    //packet[128] = 0x00;
+    //packet[129] = 0x00;
+    //packet[130] = 0x00;
+    //packet[131] = 0x00;
+    //packet[132] = 0x00;
+    //packet[133] = 0x00;
+    //packet[134] = 0x00;
+    //packet[135] = 0x00;
+    //packet[136] = 0x00;
+    //packet[137] = 0x00;
+    //packet[138] = 0x00;
+    //packet[139] = 0x00;
+    //packet[140] = 0x00;
+    //packet[141] = 0x00;
+    //packet[142] = 0x00;
+    //packet[143] = 0x00;
+    //packet[144] = 0x00;
+    //packet[145] = 0x00;
+    //packet[146] = 0x00;
+    //packet[147] = 0x00;
+    //packet[148] = 0x00;
+    //packet[149] = 0x00;
+    //packet[150] = 0x00;
+    //packet[151] = 0x00;
+    //packet[152] = 0x00;
+    //packet[153] = 0x00;
+    //packet[154] = 0x00;
+    //packet[155] = 0x00;
+    //packet[156] = 0x00;
+    //packet[157] = 0x00;
+    //packet[158] = 0x00;
+    //packet[159] = 0x00;
+    //packet[160] = 0x00;
+    //packet[161] = 0x00;
+    //packet[162] = 0x00;
+    //packet[163] = 0x00;
+    //packet[164] = 0x00;
+    //packet[165] = 0x00;
+    //packet[166] = 0x00;
+    //packet[167] = 0x00;
+    //packet[168] = 0x00;
+    //packet[169] = 0x00;
+    //packet[170] = 0x00;
+    //packet[171] = 0x00;
+    //packet[172] = 0x00;
+    //packet[173] = 0x00;
+    //packet[174] = 0x00;
+    //packet[175] = 0x00;
+    //packet[176] = 0x00;
+    //packet[177] = 0x00;
+    //packet[178] = 0x00;
+    //packet[179] = 0x00;
+    //packet[180] = 0x00;
+    //packet[181] = 0x00;
+    //packet[182] = 0x00;
+    //packet[183] = 0x00;
+    //packet[184] = 0x00;
+    //packet[185] = 0x00;
+    //packet[186] = 0x00;
+    //packet[187] = 0x00;
+    //packet[188] = 0x00;
+    //packet[189] = 0x00;
+    //packet[190] = 0x00;
+    //packet[191] = 0x00;
+    //packet[192] = 0x00;
+    //packet[193] = 0x00;
+    //packet[194] = 0x00;
+    //packet[195] = 0x00;
+    //packet[196] = 0x00;
+    //packet[197] = 0x00;
+    //packet[198] = 0x00;
+    //packet[199] = 0x00;
+    //packet[200] = 0x00;
+    //packet[201] = 0x00;
+    //packet[202] = 0x00;
+    //packet[203] = 0x00;
+    //packet[204] = 0x00;
+    //packet[205] = 0x00;
+    //packet[206] = 0x00;
+    //packet[207] = 0x00;
+    //packet[208] = 0x00;
+    //packet[209] = 0x00;
+    //packet[210] = 0x00;
+    //packet[211] = 0x00;
+    //packet[212] = 0x00;
+    //packet[213] = 0x00;
+    //packet[214] = 0x00;
+    //packet[215] = 0x00;
+    //packet[216] = 0x00;
+    //packet[217] = 0x00;
+    //packet[218] = 0x00;
+    //packet[219] = 0x00;
+    //packet[220] = 0x00;
+    //packet[221] = 0x00;
+    //packet[222] = 0x00;
+    //packet[223] = 0x00;
+    //packet[224] = 0x00;
+    //packet[225] = 0x00;
+    //packet[226] = 0x00;
+    //packet[227] = 0x00;
+    //packet[228] = 0x00;
+    //packet[229] = 0x00;
+    //packet[230] = 0x00;
+    //packet[231] = 0x00;
+    //packet[232] = 0x00;
+    //packet[233] = 0x00;
+    //packet[234] = 0x00;
+    //packet[235] = 0x00;
+    //packet[236] = 0x00;
+    //packet[237] = 0x00;
+    //packet[238] = 0x00;
+    //packet[239] = 0x00;
+    //packet[240] = 0x00;
+    //packet[241] = 0x00;
+    //packet[242] = 0x00;
+    //packet[243] = 0x00;
+    //packet[244] = 0x00;
+    //packet[245] = 0x00;
+    //packet[246] = 0x96;
+    //packet[247] = 0x94;
+    //packet[248] = 0x96;
+    //packet[249] = 0xca;
+    //packet[250] = 0x00;
+    //packet[251] = 0x00;
+    //packet[252] = 0x00;
+    //packet[253] = 0x24;
+    //packet[254] = 0x9f;
+    //packet[255] = 0x5f;
+    //packet[256] = 0x16;
+    //packet[257] = 0x41;
+    //packet[258] = 0xc0;
+    //packet[259] = 0x68;
+    //packet[260] = 0x64;
+    //packet[261] = 0x14;
+    //packet[262] = 0x95;
+    //packet[263] = 0x57;
+    //packet[264] = 0x9a;
+    //packet[265] = 0xdf;
+    //packet[266] = 0xb0;
+    //packet[267] = 0x0b;
+    //packet[268] = 0x94;
+    //packet[269] = 0x68;
+    //packet[270] = 0xbb;
+    //packet[271] = 0x49;
+    //packet[272] = 0x2f;
+    //packet[273] = 0xe3;
+    //packet[274] = 0xcc;
+    //packet[275] = 0xf9;
+    //packet[276] = 0xef;
+    //packet[277] = 0x31;
+    //packet[278] = 0xc7;
+    //packet[279] = 0xca;
+    //packet[280] = 0x05;
+    //packet[281] = 0x02;
+    //packet[282] = 0x3b;
+    //packet[283] = 0xd7;
+    //packet[284] = 0x71;
+    //packet[285] = 0xa0;
+
+
+    return packet;
+}
+
 string set_broadcast_mac_address() {
     return "00-00-00-00-00-00";
 }
@@ -677,13 +1252,17 @@ void create_packet_from_xml() {
     string local_socket_address;
     string remote_net_address;
     string remote_socket_address;
-    
+
+    // ike
+    string version_ike;
+    string exchange_type;
+
     string pcap_name = "";
     string xml_name = "";
-    
+
     cout << "Zadaj nazov pre pcap subor (\"packet.pcap\"): ";
     cin >> pcap_name;
-    
+
     cout << "Zadaj cestu pre XML subor (\"packets.xml\"): ";
     cin >> xml_name;
 
@@ -787,6 +1366,29 @@ void create_packet_from_xml() {
 
             remote_socket_address = node.getChildNode("remote_socket_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane remote_socket_address: " << remote_socket_address << endl;
+
+        } else if (!protocol_type.compare("IKE")) {
+            cout << YELLOW << "[UDP/TCP]" << RESET << " Specificke udaje pre UDP/TCP: " << endl;
+            
+            local_address = node.getChildNode("local_address").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane local_address: " << local_address << endl;
+
+            remote_address = node.getChildNode("remote_address").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane remote_address: " << remote_address << endl;
+
+            local_port = node.getChildNode("local_port").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane local_port: " << local_port << endl;
+
+            remote_port = node.getChildNode("remote_port").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane remote_port: " << remote_port << endl;
+
+            cout << YELLOW << "[IKE]" << RESET << " Specificke udaje pre (UDP) IKE: " << endl;
+
+            version_ike = node.getChildNode("version_ike").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane version_ike: " << version_ike << endl;
+
+            exchange_type = node.getChildNode("exchange_type").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane exchange_type: " << exchange_type << endl;
         }
 
         cout << YELLOW << "[Done]" << RESET << " Nacitane udaje pre packet: " << protocol_type << endl;
@@ -851,6 +1453,36 @@ void create_packet_from_xml() {
             cout << YELLOW << "[Create]" << RESET << " Zapisujem IPX PEP packet..." << endl << endl << endl;
         }
 
+        if (!protocol_type.compare("IKE")) {
+            u_char* ike_packet = setup_ike_packet(286,
+                    local_mac_address,
+                    remote_mac_address,
+                    version_ike,
+                    exchange_type,
+                    local_address,
+                    remote_address,
+                    local_port,
+                    remote_port);
+
+            // 286
+            timeval *ts_ike = (timeval*) malloc(sizeof (timeval));
+            ts_ike->tv_sec = time(NULL);
+            ts_ike->tv_usec = 0;
+
+            //creation of header
+            pcap_pkthdr *header_ike = (pcap_pkthdr*) malloc(sizeof (pcap_pkthdr));
+            header_ike->caplen = 286;
+            header_ike->len = 286;
+            header_ike->ts = *ts;
+
+            for (int i = 0; i < count_packets; i++) {
+                /* write packet to save file */
+                pcap_dump((u_char *) pcap_dump_ip, header_ike, ike_packet);
+            }
+
+            cout << YELLOW << "[Create]" << RESET << " Zapisujem IP UDP IKE packet..." << endl << endl << endl;
+        }
+
         index = "";
         frame_type = "";
         local_mac_address = "";
@@ -869,7 +1501,12 @@ void create_packet_from_xml() {
         local_socket_address = "";
         remote_net_address = "";
         remote_socket_address = "";
+        
+        exchange_type = "";
+        version_ike = "";
     }
+
+
 
     pcap_close(pcap_dead_ip);
     pcap_dump_close(pcap_dump_ip);
@@ -908,18 +1545,18 @@ void read_packet_from_xml() {
     string pcap_name = "";
     string pcap_name_new = "";
     string xml_name = "";
-    
+
     cout << "Zadaj nazov pcap suboru pre otvorenie (\"packet.pcap\"): ";
     cin >> pcap_name;
-    
+
     cout << "Zadaj nazov noveho pcap suboru (\"changed.pcap\"): ";
     cin >> pcap_name_new;
-    
+
     cout << "Zadaj cestu pre XML subor (\"change.xml\"): ";
     cin >> xml_name;
-    
-    
-    
+
+
+
     // read pcap file    
     pcap_t* opened_file;
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -1146,7 +1783,7 @@ void read_packet_from_xml() {
                             j += 2;
                         }
                     }
-                    
+
                     // change parameters
                     /*
                      * local_mac_address
@@ -1510,14 +2147,14 @@ int main(int argc, char **argv) {
     info_program();
 
     int choice = 0;
-    
+
     do {
         cout << "\nMenu packet generatora:" << endl;
         cout << "1. Generovanie packetu." << endl;
         cout << "2. Zmena packetu." << endl;
         cout << "3. Clear obrazovky." << endl;
         cout << "4. Koniec programu." << endl << endl;
-        
+
         cout << "Vyber volbu: ";
         cin >> choice;
 
