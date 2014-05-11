@@ -643,7 +643,11 @@ u_char* setup_ike_packet(int size_of_packet,
         string local_address,
         string remote_address,
         string local_port,
-        string remote_port) {
+        string remote_port,
+        string initiator_cookie,
+        string responder_cookie
+        ) {
+
     u_char* packet;
     packet = (u_char*) malloc(size_of_packet);
 
@@ -700,14 +704,14 @@ u_char* setup_ike_packet(int size_of_packet,
     packet[25] = 0x00;
 
     // IP source address
-    u_char* ipcko_local = parse_ip_addr("127.0.0.1");
+    u_char* ipcko_local = parse_ip_addr(local_address);
 
     for (int i = 26; i <= 29; i++) {
         packet[i] = ipcko_local[i - 26];
     }
 
     // IP destination address
-    u_char* ipcko_remote = parse_ip_addr("127.0.0.1");
+    u_char* ipcko_remote = parse_ip_addr(remote_address);
 
     for (int i = 30; i <= 33; i++) {
         packet[i] = ipcko_remote[i - 30];
@@ -955,36 +959,43 @@ u_char* setup_ike_packet(int size_of_packet,
     //packet[39] = 0xfc;
     //packet[40] = 0x3d;
     //packet[41] = 0x64;
-    packet[42] = 0xdd;
-    packet[43] = 0xe8;
-    packet[44] = 0x90;
-    packet[45] = 0xdb;
-    packet[46] = 0x1f;
-    packet[47] = 0x62;
-    packet[48] = 0xef;
-    packet[49] = 0x70;
-    packet[50] = 0x00;
-    packet[51] = 0x00;
-    packet[52] = 0x00;
-    packet[53] = 0x00;
-    packet[54] = 0x00;
-    packet[55] = 0x00;
-    packet[56] = 0x00;
-    packet[57] = 0x00;
+
+    // start of IKE (ISAKMP)
+    // initiator cookie
+
+    // Initiator cookie: dde890db1f62ef70
+    j = 0;
+    for (int i = 0; i < 8; i++) {
+        packet[i + 42] = str_to_int(initiator_cookie.substr(j, 2));
+        j += 2;
+    }
+
+    // Responder cookie: 0000000000000000
+    j = 0;
+    for (int i = 0; i < 8; i++) {
+        packet[i + 50] = str_to_int(responder_cookie.substr(j, 2));
+        j += 2;
+    }
+
+    // Next payload: Security Association (33)
     packet[58] = 0x21;
 
     // IKE version 20 - 2 major 0 minor
     packet[59] = str_to_int(version_ike);
 
-    // exchange type
+    // Exchange type: INFORMATIONAL (37)
     packet[60] = str_to_int(dec_to_hexstr(exchange_type));
 
-
+    // Flags
     packet[61] = 0x08;
+
+    // Message ID: 0x00000000
     packet[62] = 0x00;
     packet[63] = 0x00;
     packet[64] = 0x00;
     packet[65] = 0x00;
+
+    // length
     packet[66] = 0x00;
     packet[67] = 0x00;
     packet[68] = 0x00;
@@ -1206,7 +1217,6 @@ u_char* setup_ike_packet(int size_of_packet,
     //packet[284] = 0x71;
     //packet[285] = 0xa0;
 
-
     return packet;
 }
 
@@ -1256,6 +1266,8 @@ void create_packet_from_xml() {
     // ike
     string version_ike;
     string exchange_type;
+    string initiator_cookie;
+    string responder_cookie;
 
     string pcap_name = "";
     string xml_name = "";
@@ -1328,7 +1340,7 @@ void create_packet_from_xml() {
         frame_type = node.getChildNode("frame_type").getText();
         cout << GREEN << "[OK]" << RESET << " Nacitany frame_type: " << frame_type << endl;
 
-        if (!protocol_type.compare(UDP) || !protocol_type.compare(TCP)) {
+        if (!protocol_type.compare("UDP") || !protocol_type.compare("TCP")) {
             cout << YELLOW << "[UDP/TCP]" << RESET << " Specificke udaje pre UDP/TCP: " << endl;
             version = node.getChildNode("version").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane version: " << version << endl;
@@ -1352,7 +1364,7 @@ void create_packet_from_xml() {
             }
             cout << GREEN << "[OK]" << RESET << " Nacitane service_name: " << service_name << endl;
 
-        } else if (!protocol_type.compare(PEP)) {
+        } else if (!protocol_type.compare("PEP")) {
             cout << YELLOW << "[PEP]" << RESET << " Specificke udaje pre (IPX) PEP: " << endl;
 
             local_net_address = node.getChildNode("local_net_address").getText();
@@ -1369,7 +1381,7 @@ void create_packet_from_xml() {
 
         } else if (!protocol_type.compare("IKE")) {
             cout << YELLOW << "[UDP/TCP]" << RESET << " Specificke udaje pre UDP/TCP: " << endl;
-            
+
             local_address = node.getChildNode("local_address").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane local_address: " << local_address << endl;
 
@@ -1389,6 +1401,12 @@ void create_packet_from_xml() {
 
             exchange_type = node.getChildNode("exchange_type").getText();
             cout << GREEN << "[OK]" << RESET << " Nacitane exchange_type: " << exchange_type << endl;
+
+            initiator_cookie = node.getChildNode("initiator_cookie").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane initiator_cookie: " << initiator_cookie << endl;
+
+            responder_cookie = node.getChildNode("responder_cookie").getText();
+            cout << GREEN << "[OK]" << RESET << " Nacitane responder_cookie: " << responder_cookie << endl;
         }
 
         cout << YELLOW << "[Done]" << RESET << " Nacitane udaje pre packet: " << protocol_type << endl;
@@ -1399,7 +1417,7 @@ void create_packet_from_xml() {
 
         int count_packets = str_to_int(packets, 10);
 
-        if (!protocol_type.compare(UDP)) {
+        if (!protocol_type.compare("UDP")) {
             u_char* udp_packet = setup_udp_packet(70,
                     local_mac_address,
                     remote_mac_address,
@@ -1419,7 +1437,7 @@ void create_packet_from_xml() {
             }
             cout << YELLOW << "[Create]" << RESET << " Zapisujem UDP packet..." << endl << endl << endl;
         }
-        if (!protocol_type.compare(TCP)) {
+        if (!protocol_type.compare("TCP")) {
             u_char* tcp_packet = setup_tcp_packet(70,
                     local_mac_address,
                     remote_mac_address,
@@ -1437,7 +1455,7 @@ void create_packet_from_xml() {
             }
             cout << YELLOW << "[Create]" << RESET << " Zapisujem TCP packet..." << endl << endl << endl;
         }
-        if (!protocol_type.compare(PEP)) {
+        if (!protocol_type.compare("PEP")) {
             u_char* ipx_packet = setup_ipx_packet(70,
                     local_mac_address,
                     remote_mac_address,
@@ -1462,7 +1480,9 @@ void create_packet_from_xml() {
                     local_address,
                     remote_address,
                     local_port,
-                    remote_port);
+                    remote_port,
+                    initiator_cookie,
+                    responder_cookie);
 
             // 286
             timeval *ts_ike = (timeval*) malloc(sizeof (timeval));
@@ -1501,9 +1521,11 @@ void create_packet_from_xml() {
         local_socket_address = "";
         remote_net_address = "";
         remote_socket_address = "";
-        
+
         exchange_type = "";
         version_ike = "";
+        initiator_cookie = "";
+        responder_cookie = "";
     }
 
 

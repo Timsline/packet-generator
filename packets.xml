@@ -86,8 +86,10 @@
         <protocol_type>IKE</protocol_type> 
         <version_ike>20</version_ike> 
         <exchange_type>34</exchange_type>
+        <initiator_cookie>dde890db1f62ef70</initiator_cookie>
+        <responder_cookie>0000000000000000</responder_cookie>
         <local_port>500</local_port> 
         <remote_port>500</remote_port> 
-        <packets>5</packets>
+        <packets>1</packets>
     </item>
 </packets_summary>
